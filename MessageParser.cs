@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NetParse
+namespace ToSParser
 {
     public delegate ref int BufferIndex();
 
