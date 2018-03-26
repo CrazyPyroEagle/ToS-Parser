@@ -22,68 +22,70 @@ These extension methods are defined in the `ClientMessageParsers` and `ServerMes
 
 Here's an example of a program that automatically accepts any party invitation or friend request it receives.
 
-    using System;
-	using System.Net.Sockets;
-	using ToSParser;
+```C#
+using System;
+using System.Net.Sockets;
+using ToSParser;
 
-	class ParseDemo
+class ParseDemo
+{
+	private const uint BUILD_NUMBER = 8910u;
+
+	private Socket socket;
+	private MessageParser parser;
+	private byte[] readBuffer;
+
+	public static void Main(string[] args)
 	{
-		private const uint BUILD_NUMBER = 8910u;
-
-		private Socket socket;
-		private MessageParser parser;
-		private byte[] readBuffer;
-
-		public static void Main(string[] args)
-		{
-			Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			socket.Connect("live4.tos.blankmediagames.com", 3600);
-			new ParseDemo(socket);
-		}
-
-		private ParseDemo(Socket socket)
-		{
-			this.socket = socket;
-			parser = new MessageParser(ParseMessage, (buffer, index, length) => socket.Send(buffer, index, length, SocketFlags.None));
-			readBuffer = new byte[4096];
-			QueueReceive();
-			// Send the authentication message here.
-			// e.g. (Note: I do not recommend the use of legacy authentication due to its use of plaintext password transmission.)
-			// parser.Authenticate(AuthenticationModeID.BMG_FORUMS, false, BUILD_NUMBER, "ExampleAccount", "examplepassword");
-		}
-
-		private void ParseMessage(byte[] buffer, int index, int length)
-		{
-			switch ((ServerMessageType)buffer[index++])
-			{
-				case ServerMessageType.PARTY_INVITE_NOTIFICATION:
-					ServerMessageParsers.PARTY_INVITE_NOTIFICATION.Build(buffer, index, length).Parse(out uint user);
-					parser.RespondPartyInvite(PartyInviteResponse.ACCEPTING, user);
-					parser.RespondPartyInvite(PartyInviteResponse.ACCEPTED, user);
-					break;
-				case ServerMessageType.FRIEND_REQUEST_NOTIFICATIONS:
-					ServerMessageParsers.FRIEND_REQUEST_NOTIFICATIONS.Build(buffer, index, length).Parse(p =>
-					{
-						RootParser root = p.Parse(out string username).Parse(out uint userID);
-						parser.AcceptFriend(username, userID);
-						return root;
-					}, out _);
-					break;
-			}
-		}
-
-		private void Receive(IAsyncResult result)
-		{
-			try
-			{
-				parser.Parse(readBuffer, 0, socket.EndReceive(result));
-				QueueReceive();
-			}
-			catch (SocketException)
-			{
-				socket.Close();
-			}
-		}
-
-		private void QueueReceive() => socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, Receive, null);
+		Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+		socket.Connect("live4.tos.blankmediagames.com", 3600);
+		new ParseDemo(socket);
 	}
+
+	private ParseDemo(Socket socket)
+	{
+		this.socket = socket;
+		parser = new MessageParser(ParseMessage, (buffer, index, length) => socket.Send(buffer, index, length, SocketFlags.None));
+		readBuffer = new byte[4096];
+		QueueReceive();
+		// Send the authentication message here.
+		// e.g. (Note: I do not recommend the use of legacy authentication due to its use of plaintext password transmission.)
+		// parser.Authenticate(AuthenticationModeID.BMG_FORUMS, false, BUILD_NUMBER, "ExampleAccount", "examplepassword");
+	}
+
+	private void ParseMessage(byte[] buffer, int index, int length)
+	{
+		switch ((ServerMessageType)buffer[index++])
+		{
+			case ServerMessageType.PARTY_INVITE_NOTIFICATION:
+				ServerMessageParsers.PARTY_INVITE_NOTIFICATION.Build(buffer, index, length).Parse(out uint user);
+				parser.RespondPartyInvite(PartyInviteResponse.ACCEPTING, user);
+				parser.RespondPartyInvite(PartyInviteResponse.ACCEPTED, user);
+				break;
+			case ServerMessageType.FRIEND_REQUEST_NOTIFICATIONS:
+				ServerMessageParsers.FRIEND_REQUEST_NOTIFICATIONS.Build(buffer, index, length).Parse(p =>
+				{
+					RootParser root = p.Parse(out string username).Parse(out uint userID);
+					parser.AcceptFriend(username, userID);
+					return root;
+				}, out _);
+				break;
+		}
+	}
+
+	private void Receive(IAsyncResult result)
+	{
+		try
+		{
+			parser.Parse(readBuffer, 0, socket.EndReceive(result));
+			QueueReceive();
+		}
+		catch (SocketException)
+		{
+			socket.Close();
+		}
+	}
+
+	private void QueueReceive() => socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, Receive, null);
+}
+```
