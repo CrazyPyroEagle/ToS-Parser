@@ -1,2 +1,2 @@
 # ToS-Parser
-Network message parsers for the protocol the Town Of Salem game uses.
+Network message parsers designed specifically to parse client/server messages used by Town Of Salem.
