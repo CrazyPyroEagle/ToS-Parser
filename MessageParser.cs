@@ -159,7 +159,7 @@ namespace ToSParser
 
         public RootWriter Parse(bool condition, Func<Parent1, RootWriter> ifTrue, Func<Parent2, RootWriter> ifFalse) => condition ? ifTrue(parent1) : ifFalse(parent2);
 
-        public ConditionalWriter<Parent1, Parent2> Copy(byte[] buffer, BufferIndex index) => new ConditionalWriter<Parent1, Parent2>(buffer, index, parent1, parent2);
+        public ConditionalWriter<Parent1, Parent2> Copy(byte[] buffer, BufferIndex index) => new ConditionalWriter<Parent1, Parent2>(buffer, index, parent1.Copy(buffer, index), parent2.Copy(buffer, index));
     }
 
     public interface ParserBuilder<This1, This2> where This1 : UnknownParser<This1> where This2 : UnknownWriter<This2>
@@ -260,10 +260,7 @@ namespace ToSParser
 
         public virtual Parser<Type, Parent> Copy(byte[] buffer, BufferIndex index, int size) => new BaseParser<Type, Parent>(buffer, index, size, parent.Copy(buffer, index, size), converter);
 
-        public void SetMaxLimit(int limit)
-        {
-            this.size = limit;
-        }
+        public void SetMaxLimit(int limit) => this.size = limit;
     }
 
     internal class BaseWriter<Type, Parent> : Writer<Type, Parent> where Parent : UnknownWriter<Parent>
@@ -426,7 +423,7 @@ namespace ToSParser
             return parent;
         }
 
-        public virtual RepeatWriter<Repeat, Parent> Copy(byte[] buffer, BufferIndex index) => new BaseRepeatWriter<Repeat, Parent>(buffer, index, parent, clip, repeat);
+        public virtual RepeatWriter<Repeat, Parent> Copy(byte[] buffer, BufferIndex index) => new BaseRepeatWriter<Repeat, Parent>(buffer, index, parent.Copy(buffer, index), clip, repeat.Copy(buffer, index));
     }
 
     internal class DelimitedRepeatParser<Repeat, Parent> : BaseRepeatParser<Repeat, Parent> where Parent : UnknownParser<Parent> where Repeat : UnknownParser<Repeat>
@@ -466,288 +463,8 @@ namespace ToSParser
             return base.Parse(values, writer);
         }
 
-        public override RepeatWriter<Repeat, Parent> Copy(byte[] buffer, BufferIndex index) => new DelimitedRepeatWriter<Repeat, Parent>(buffer, index, parent, clip, repeat, delimiter);
+        public override RepeatWriter<Repeat, Parent> Copy(byte[] buffer, BufferIndex index) => new DelimitedRepeatWriter<Repeat, Parent>(buffer, index, parent.Copy(buffer, index), clip, repeat.Copy(buffer, index), delimiter);
     }
-
-    /*public interface UnknownParser
-    {
-        int GetLimit(byte[] buffer, int index, int size);
-    }
-
-    public interface Parser<Type, Parent> : UnknownParser where Parent : UnknownParser
-    {
-        Parent Parse(byte[] buffer, ref int index, int size, out Type value);
-        Parent Parse(byte[] buffer, ref int index, Type value);
-    }
-
-    public interface RepeatParser<Repeat, Parent> : UnknownParser where Parent : UnknownParser where Repeat : UnknownParser
-    {
-        Repeat GetRepeat();
-        Parent GetParent();
-        Parent Parse(byte[] buffer, ref int index, int size, MessageParser.PartialReader<Repeat> parser, out int count);
-        Parent Parse<T>(byte[] buffer, ref int index, IEnumerable<T> values, Func<T, MessageParser.PartialWriter<Repeat>> parser);
-    }
-
-    public class RootParser : UnknownParser
-    {
-        private Option<byte> delimiter;
-
-        internal RootParser() { }
-        internal RootParser(byte delimiter) => this.delimiter = delimiter.Some();
-
-        public int GetLimit(byte[] buffer, int index, int size) => delimiter.Map(d => GetLimit(buffer, index, size, d)).ValueOr(size);
-
-        public void CheckPadding(byte[] buffer, ref int index, int size)
-        {
-            if (delimiter.HasValue && size > index && buffer[index++] != delimiter.ValueOr(0)) throw new ArgumentException("illegal byte");
-        }
-
-        public void AddPadding(byte[] buffer, ref int index)
-        {
-            if (delimiter.HasValue) buffer[index++] = delimiter.ValueOr(0);
-        }
-
-        private int GetLimit(byte[] buffer, int index, int size, byte delimiter)
-        {
-            for (int offset = index; offset < size; offset++) if (buffer[offset] == delimiter) return offset;
-            return size;
-        }
-    }
-
-    public class ConditionalParser<Parent1, Parent2> : UnknownParser where Parent1 : UnknownParser where Parent2 : UnknownParser
-    {
-        private Parent1 parent1;
-        private Parent2 parent2;
-
-        public ConditionalParser(Parent1 parent1, Parent2 parent2)
-        {
-            this.parent1 = parent1;
-            this.parent2 = parent2;
-        }
-
-        public int GetLimit(byte[] buffer, int index, int size) => parent1.GetLimit(buffer, index, size);
-
-        public Parent1 getTrue() => parent1;
-
-        public Parent2 getFalse() => parent2;
-
-        public RootParser Parse(byte[] buffer, ref int index, bool condition, MessageParser.PartialWriter<Parent1> ifTrue, MessageParser.PartialWriter<Parent2> ifFalse) => condition ? ifTrue(parent1, buffer, ref index) : ifFalse(parent2, buffer, ref index);
-    }
-
-    public interface ParserBuilder<This> where This : UnknownParser
-    {
-        ParserBuilder<Parser<R, This>> After<R>(Converter<R> converter);
-        ParserBuilder<Parser<R, This>> After<R>(Converter<R> converter, byte delimiter);
-        ParserBuilder<RepeatParser<R, This>> Repeat<R>(int clip, R repeat) where R : UnknownParser;
-        ParserBuilder<RepeatParser<R, This>> Repeat<R>(int clip, R repeat, byte delimiter) where R : UnknownParser;
-        ParserBuilder<ConditionalParser<This, R>> Condition<R>(R ifFalse) where R : UnknownParser;
-        This Build();
-    }
-
-    public class RootParserBuilder : BaseParserBuilder<RootParser>
-    {
-        public RootParserBuilder() : base(new RootParser()) { }
-        public RootParserBuilder(byte delimiter) : base(new RootParser(delimiter)) { }
-    }
-
-    public class BaseParserBuilder<This> : ParserBuilder<This> where This : UnknownParser
-    {
-        private This parser;
-
-        internal BaseParserBuilder(This parser) => this.parser = parser;
-
-        public ParserBuilder<Parser<R, This>> After<R>(Converter<R> converter) => new BaseParserBuilder<Parser<R, This>>(new BaseParser<R, This>(parser, converter));
-
-        public ParserBuilder<Parser<R, This>> After<R>(Converter<R> converter, byte delimiter) => new BaseParserBuilder<Parser<R, This>>(new DelimitedParser<R, This>(parser, converter, delimiter));
-
-        public ParserBuilder<RepeatParser<R, This>> Repeat<R>(int clip, R repeat) where R : UnknownParser => new BaseParserBuilder<RepeatParser<R, This>>(new BaseRepeatParser<R, This>(parser, clip, repeat));
-
-        public ParserBuilder<RepeatParser<R, This>> Repeat<R>(int clip, R repeat, byte delimiter) where R : UnknownParser => new BaseParserBuilder<RepeatParser<R, This>>(new DelimitedRepeatParser<R, This>(parser, clip, repeat, delimiter));
-
-        public ParserBuilder<ConditionalParser<This, R>> Condition<R>(R ifFalse) where R : UnknownParser => new BaseParserBuilder<ConditionalParser<This, R>>(new ConditionalParser<This, R>(parser, ifFalse));
-
-        public This Build() => parser;
-    }
-
-    internal class BaseParser<Type, Parent> : Parser<Type, Parent> where Parent : UnknownParser
-    {
-        private Parent parent;
-        private Converter<Type> converter;
-
-        internal BaseParser(Parent parent, Converter<Type> converter)
-        {
-            this.parent = parent;
-            this.converter = converter;
-        }
-
-        public virtual int GetLimit(byte[] buffer, int index, int size) => parent.GetLimit(buffer, index, size);
-
-        public virtual Parent Parse(byte[] buffer, ref int index, int size, out Type value)
-        {
-            int index2 = index;
-            while (index2 <= size)
-            {
-                try
-                {
-                    index2 = parent.GetLimit(buffer, index2, size);
-                    int copy = index;
-                    value = converter.FromBytes(buffer, ref copy, index2++ - index);
-                    index = copy;
-                    return parent;
-                }
-                catch (ArgumentException)
-                {
-                    index2++;
-                }
-            }
-            throw new ArgumentException("insufficient data");
-        }
-
-        public virtual Parent Parse(byte[] buffer, ref int index, Type value)
-        {
-            converter.ToBytes(buffer, ref index, value);
-            return parent;
-        }
-    }
-
-    internal class DelimitedParser<Type, Parent> : BaseParser<Type, Parent> where Parent : UnknownParser
-    {
-        private byte delimiter;
-
-        internal DelimitedParser(Parent parent, Converter<Type> converter, byte delimiter) : base(parent, converter) => this.delimiter = delimiter;
-
-        public override int GetLimit(byte[] buffer, int index, int size)
-        {
-            for (int offset = index; offset < size; offset++) if (buffer[offset] == delimiter) return offset;
-            return size;
-        }
-
-        public override Parent Parse(byte[] buffer, ref int index, int size, out Type value)
-        {
-            if (size > index && buffer[index++] != delimiter) throw new ArgumentException("illegal byte");
-            return base.Parse(buffer, ref index, size, out value);
-        }
-
-        public override Parent Parse(byte[] buffer, ref int index, Type value)
-        {
-            buffer[index++] = delimiter;
-            return base.Parse(buffer, ref index, value);
-        }
-    }
-
-    internal class BaseRepeatParser<Repeat, Parent> : RepeatParser<Repeat, Parent> where Parent : UnknownParser where Repeat : UnknownParser
-    {
-        private Parent parent;
-        private int clip;
-        private Repeat repeat;
-
-        internal BaseRepeatParser(Parent parent, int clip, Repeat repeat)
-        {
-            this.parent = parent;
-            this.clip = clip;
-            this.repeat = repeat;
-        }
-
-        public virtual int GetLimit(byte[] buffer, int index, int size) => parent.GetLimit(buffer, index, size);
-
-        public Repeat GetRepeat() => repeat;
-
-        public Parent GetParent() => parent;
-
-        public virtual Parent Parse(byte[] buffer, ref int index, int size, MessageParser.PartialReader<Repeat> action, out int count)
-        {
-            int limit = index;
-            int copy = index;
-            while (limit < size)
-            {
-                limit = parent.GetLimit(buffer, limit, size);
-                count = 0;
-                while (index < limit)
-                {
-                    try
-                    {
-                        action(repeat, buffer, ref index, size).CheckPadding(buffer, ref index, size);
-                        count++;
-                    }
-                    catch (Exception)
-                    {
-                        index = copy;
-                        continue;
-                    }
-                }
-                return parent;
-            }
-            throw new ArgumentException("insufficient data");
-        }
-
-        public virtual Parent Parse<T>(byte[] buffer, ref int index, IEnumerable<T> values, Func<T, MessageParser.PartialWriter<Repeat>> parser)
-        {
-            int start = index;
-            foreach (T value in values) parser(value)(repeat, buffer, ref index).AddPadding(buffer, ref index);
-            if (index > start) index -= clip;
-            return parent;
-        }
-    }
-
-    internal class DelimitedRepeatParser<Repeat, Parent> : BaseRepeatParser<Repeat, Parent> where Parent : UnknownParser where Repeat : UnknownParser
-    {
-        private byte delimiter;
-
-        internal DelimitedRepeatParser(Parent parent, int clip, Repeat repeat, byte delimiter) : base(parent, clip, repeat) => this.delimiter = delimiter;
-
-        public override int GetLimit(byte[] buffer, int index, int size)
-        {
-            for (int offset = index; offset < size; offset++) if (buffer[offset] == delimiter) return offset;
-            return size;
-        }
-
-        public override Parent Parse(byte[] buffer, ref int index, int size, MessageParser.PartialReader<Repeat> action, out int count)
-        {
-            if (index < size && buffer[index++] != delimiter) throw new ArgumentException("illegal byte");
-            return base.Parse(buffer, ref index, size, action, out count);
-        }
-
-        public override Parent Parse<T>(byte[] buffer, ref int index, IEnumerable<T> values, Func<T, MessageParser.PartialWriter<Repeat>> parser)
-        {
-            buffer[index++] = delimiter;
-            return base.Parse(buffer, ref index, values, parser);
-        }
-    }
-
-    internal static class Parsers
-    {
-        internal static readonly RootParser ROOT = new RootBuilder().Build();
-
-        internal static readonly Parser<string, RootParser> STRING = new RootBuilder().After(Converters.STRING).Build();
-        internal static readonly Parser<uint, RootParser> UINT = new RootBuilder().After(Converters.UInt<uint>()).Build();
-        internal static readonly Parser<byte, RootParser> BYTE = new RootBuilder().After(Converters.Byte<byte>()).Build();
-        internal static readonly Parser<bool, RootParser> BOOLEAN = new RootBuilder().After(Converters.BOOLEAN1).Build();
-        internal static readonly Parser<BrandID, RootParser> BRAND = new RootBuilder().After(Converters.Byte<BrandID>()).Build();
-        internal static readonly Parser<GameModeID, RootParser> GAMEMODE = new RootBuilder().After(Converters.Byte<GameModeID>()).Build();
-        internal static readonly Parser<CatalogID, RootParser> CATALOG = new RootBuilder().After(Converters.Byte<CatalogID>()).Build();
-        internal static readonly Parser<PlayerID, RootParser> PLAYER = new RootBuilder().After(Converters.Byte<PlayerID>()).Build();
-        internal static readonly Parser<RoleID, RootParser> ROLE = new RootBuilder().After(Converters.Byte<RoleID>()).Build();
-        internal static readonly Parser<LocalizationTableID, RootParser> LOCALIZATION = new RootBuilder().After(Converters.Byte<LocalizationTableID>()).Build();
-
-        internal static readonly Parser<byte, Parser<byte, RootParser>> BYTE2 = new RootBuilder().After(Converters.Byte<byte>()).After(Converters.Byte<byte>()).Build();
-        internal static readonly Parser<PlayerID, Parser<string, RootParser>> PLAYER_STRING = new RootBuilder().After(Converters.STRING).After(Converters.Byte<PlayerID>()).Build();
-        internal static readonly Parser<PlayerID, Parser<byte, RootParser>> PLAYER_BYTE = new RootBuilder().After(Converters.Byte<byte>()).After(Converters.Byte<PlayerID>()).Build();
-        internal static readonly Parser<PlayerID, Parser<PlayerID, RootParser>> PLAYER2 = new RootBuilder().After(Converters.Byte<PlayerID>()).After(Converters.Byte<PlayerID>()).Build();
-        internal static readonly Parser<PlayerID, Parser<RoleID, RootParser>> PLAYER_ROLE = new RootBuilder().After(Converters.Byte<RoleID>()).After(Converters.Byte<PlayerID>()).Build();
-
-        internal static readonly Parser<PlayerID, Parser<PlayerID, Parser<byte, RootParser>>> PLAYER2_BYTE = new RootBuilder().After(Converters.Byte<byte>()).After(Converters.Byte<PlayerID>()).After(Converters.Byte<PlayerID>()).Build();
-        internal static readonly Parser<PlayerID, Parser<TauntTargetType, Parser<TauntID, RootParser>>> PLAYER_TYPE_TAUNT = new RootBuilder().After(Converters.Byte<TauntID>()).After(Converters.Byte<TauntTargetType>()).After(Converters.Byte<PlayerID>()).Build();
-
-        internal static readonly Parser<string, Parser<string, RootParser>> STRING2_ASTERISK = new RootBuilder().After(Converters.STRING, 0x2A).After(Converters.STRING).Build();
-        internal static readonly Parser<string, Parser<uint, RootParser>> STRING_UINT_ASTERISK = new RootBuilder().After(Converters.UInt<uint>(), 0x2A).After(Converters.STRING).Build();
-        internal static readonly Parser<uint, Parser<OnlineStatus, Parser<bool, RootParser>>> UINT_ONLINE_BOOLEAN_COMMA = new RootBuilder().After(Converters.BOOLEAN2, 0x2A).After(Converters.Byte<OnlineStatus>(), 0x2A).After(Converters.UInt<uint>()).Build();
-        internal static readonly Parser<string, Parser<uint, Parser<OnlineStatus, Parser<bool, RootParser>>>> STRING_UINT_ONLINE_BOOLEAN_COMMA = new RootBuilder(0x2A).After(Converters.BOOLEAN2, 0x2C).After(Converters.Byte<OnlineStatus>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.STRING).Build();
-        internal static readonly Parser<uint, Parser<uint, Parser<uint, Parser<uint, Parser<uint, RootParser>>>>> UINT5_COMMA = new RootBuilder(0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<uint>()).Build();
-
-        internal static readonly RepeatParser<Parser<PlayerID, RootParser>, RootParser> REPEAT_PLAYER = new RootBuilder().Repeat(0, PLAYER).Build();
-        internal static readonly RepeatParser<Parser<AchievementID, RootParser>, RootParser> REPEAT_ACHIEVEMENT = new RootBuilder().Repeat(1, new RootBuilder(0x2C).After(Converters.UInt<AchievementID>()).Build()).Build();
-        internal static readonly RepeatParser<Parser<PlayerID, Parser<RoleID, RootParser>>, RootParser> REPEAT_PLAYER_ROLE = new RootBuilder().Repeat(0, PLAYER_ROLE).Build();
-    }*/
 
     internal static class Parsers
     {
