@@ -82,6 +82,8 @@ namespace ToSParser
         JACK_FROST,
         JUDGE,
         ALABASTER_REAPER,
-        MONTY_MONEYBAGS
+        MONTY_MONEYBAGS,
+        TEN_KARAT_TIM,
+        MARIGOLD
     }
 }

@@ -44,6 +44,12 @@ namespace ToSParser
         SEASON_1_MASTER,
         GMOD,
         JUROR,
-        JUDGE
+        JUDGE,
+        SEASON_2_BRONZE,
+        SEASON_2_SILVER,
+        SEASON_2_GOLD,
+        SEASON_2_PLATINUM,
+        SEASON_2_DIAMOND,
+        SEASON_2_MASTER
     }
 }
