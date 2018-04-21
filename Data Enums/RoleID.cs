@@ -81,13 +81,13 @@ namespace ToSParser
         COVEN_MAFIA_DECEPTION,
         COVEN_RANDOM_NEUTRAL,
         COVEN_NEUTRAL_BENIGN,
-        COVEN_NEUTRAL_CHAOS,
         COVEN_NEUTRAL_EVIL,
         COVEN_NEUTRAL_KILLING,
         COVEN_ANY,
-        PESTILENCE = 101,
-        GHOUL = 102,
-        CLEANED = 201,
-        STONED = 202
+        COVEN_NEUTRAL_CHAOS,
+        PESTILENCE = 100,
+        GHOUL = 101,
+        CLEANED = 200,
+        STONED = 201
     }
 }
