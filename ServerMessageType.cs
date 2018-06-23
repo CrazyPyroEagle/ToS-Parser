@@ -356,7 +356,7 @@ namespace ToSParser
         public static readonly ParserBuilder<Parser<PlayerID, RootParser>, Writer<PlayerID, RootWriter>> USER_JUDGEMENT_VOTED = Parsers.PLAYER;
         public static readonly ParserBuilder<Parser<PlayerID, RootParser>, Writer<PlayerID, RootWriter>> USER_CHANGED_JUDGEMENT_VOTE = Parsers.PLAYER;
         public static readonly ParserBuilder<Parser<PlayerID, RootParser>, Writer<PlayerID, RootWriter>> USER_CANCELED_JUDGEMENT_VOTE = Parsers.PLAYER;
-        public static readonly ParserBuilder<Parser<PlayerID, Parser<byte, RootParser>>, Writer<PlayerID, Writer<byte, RootWriter>>> TELL_JUDGEMENT_VOTES = Parsers.PLAYER_BYTE;
+        public static readonly ParserBuilder<Parser<PlayerID, Parser<JudgementVoteID, RootParser>>, Writer<PlayerID, Writer<JudgementVoteID, RootWriter>>> TELL_JUDGEMENT_VOTES = Parsers.ROOT.After(Converters.Byte<JudgementVoteID>()).After(Converters.Byte<PlayerID>());
         public static readonly RootBuilder EXECUTIONER_COMPLETED_GOAL = Parsers.ROOT;
         public static readonly RootBuilder JESTER_COMPLETED_GOAL = Parsers.ROOT;
         public static readonly ParserBuilder<Parser<PlayerID, RootParser>, Writer<PlayerID, RootWriter>> MAYOR_REVEALED = Parsers.PLAYER;
@@ -573,7 +573,7 @@ namespace ToSParser
         public static void UserJudgementVoted(this MessageParser parser, PlayerID player) => parser.Parse((byte)ServerMessageType.USER_JUDGEMENT_VOTED, (buffer, index) => USER_JUDGEMENT_VOTED.Build(buffer, index).Parse(player));
         public static void UserChangedJudgementVote(this MessageParser parser, PlayerID player) => parser.Parse((byte)ServerMessageType.USER_CHANGED_JUDGEMENT_VOTE, (buffer, index) => USER_CHANGED_JUDGEMENT_VOTE.Build(buffer, index).Parse(player));
         public static void UserCanceledJudgementVote(this MessageParser parser, PlayerID player) => parser.Parse((byte)ServerMessageType.USER_CANCELED_JUDGEMENT_VOTE, (buffer, index) => USER_CANCELED_JUDGEMENT_VOTE.Build(buffer, index).Parse(player));
-        public static void TellJudgementVotes(this MessageParser parser, PlayerID player, byte vote) => parser.Parse((byte)ServerMessageType.TELL_JUDGEMENT_VOTES, (buffer, index) => TELL_JUDGEMENT_VOTES.Build(buffer, index).Parse(player).Parse(vote));
+        public static void TellJudgementVotes(this MessageParser parser, PlayerID player, JudgementVoteID vote) => parser.Parse((byte)ServerMessageType.TELL_JUDGEMENT_VOTES, (buffer, index) => TELL_JUDGEMENT_VOTES.Build(buffer, index).Parse(player).Parse(vote));
         public static void ExecutionerCompletedGoal(this MessageParser parser) => parser.Parse((byte)ServerMessageType.EXECUTIONER_COMPLETED_GOAL, EXECUTIONER_COMPLETED_GOAL.Build);
         public static void JesterCompletedGoal(this MessageParser parser) => parser.Parse((byte)ServerMessageType.JESTER_COMPLETED_GOAL, JESTER_COMPLETED_GOAL.Build);
         public static void MayorRevealed(this MessageParser parser, PlayerID player) => parser.Parse((byte)ServerMessageType.MAYOR_REVEALED, (buffer, index) => MAYOR_REVEALED.Build(buffer, index).Parse(player));

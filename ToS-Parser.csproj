@@ -74,6 +74,7 @@
     <Compile Include="Data Enums\HouseID.cs" />
     <Compile Include="Data Enums\ExecuteReasonID.cs" />
     <Compile Include="Data Enums\ItemType.cs" />
+    <Compile Include="Data Enums\JudgementVoteID.cs" />
     <Compile Include="Data Enums\LanguageID.cs" />
     <Compile Include="Data Enums\LobbyIconID.cs" />
     <Compile Include="Data Enums\LocalizationTableID.cs" />
