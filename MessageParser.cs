@@ -469,6 +469,7 @@ namespace ToSParser
     internal static class Parsers
     {
         internal static readonly RootBuilder ROOT = new RootBuilder();
+        internal static readonly RootBuilder ROOT_ASTERISK = new RootBuilder(0x2A);
         internal static readonly RootBuilder ROOT_COMMA = new RootBuilder(0x2C);
 
         internal static readonly ParserBuilder<Parser<string, RootParser>, Writer<string, RootWriter>> STRING = ROOT.After(Converters.STRING);

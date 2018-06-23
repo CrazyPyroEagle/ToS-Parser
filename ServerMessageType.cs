@@ -262,7 +262,7 @@ namespace ToSParser
         public static readonly ParserBuilder<Parser<string, RootParser>, Writer<string, RootWriter>> SYSTEM_MESSAGE = Parsers.STRING;
         public static readonly ParserBuilder<Parser<LocalizationTableID, RootParser>, Writer<LocalizationTableID, RootWriter>> STRING_TABLE_MESSAGE = Parsers.LOCALIZATION;
         public static readonly ParserBuilder<RepeatParser<Parser<string, Parser<uint, Parser<OnlineStatus, Parser<bool, RootParser>>>>, RootParser>, RepeatWriter<Writer<string, Writer<uint, Writer<OnlineStatus, Writer<bool, RootWriter>>>>, RootWriter>> FRIEND_LIST = Parsers.ROOT.Repeat(1, Parsers.STRING_UINT_ONLINE_BOOLEAN_COMMA);
-        public static readonly ParserBuilder<RepeatParser<Parser<string, Parser<uint, RootParser>>, RootParser>, RepeatWriter<Writer<string, Writer<uint, RootWriter>>, RootWriter>> FRIEND_REQUEST_NOTIFICATIONS = Parsers.ROOT.Repeat(1, Parsers.STRING_UINT_ASTERISK);
+        public static readonly ParserBuilder<RepeatParser<Parser<string, Parser<uint, RootParser>>, RootParser>, RepeatWriter<Writer<string, Writer<uint, RootWriter>>, RootWriter>> FRIEND_REQUEST_NOTIFICATIONS = Parsers.ROOT.Repeat(1, Parsers.ROOT_ASTERISK.After(Converters.UInt<uint>(), 0x2C).After(Converters.STRING));
         public static readonly ParserBuilder<Parser<bool, RootParser>, Writer<bool, RootWriter>> ADD_FRIEND_REQUEST_RESPONSE = Parsers.BOOLEAN;
         public static readonly ParserBuilder<Parser<uint, Parser<OnlineStatus, Parser<bool, RootParser>>>, Writer<uint, Writer<OnlineStatus, Writer<bool, RootWriter>>>> CONFIRM_FRIEND_REQUEST = Parsers.UINT_ONLINE_BOOLEAN_COMMA;
         public static readonly ParserBuilder<Parser<uint, RootParser>, Writer<uint, RootWriter>> SUCCESSFULLY_REMOVED_FRIEND = Parsers.UINT;
