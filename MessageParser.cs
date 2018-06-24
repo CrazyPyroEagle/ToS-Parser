@@ -75,7 +75,7 @@ namespace ToSParser
 
         private int GetLimit(byte delimiter)
         {
-            for (int offset = index(); offset < size; offset++) if (buffer[index()] == delimiter) return offset;
+            for (int offset = index(); offset < size; offset++) if (buffer[offset] == delimiter) return offset;
             return size;
         }
 
@@ -368,7 +368,6 @@ namespace ToSParser
             int copy = index();
             while (limit < size)
             {
-                index() = limit;
                 limit = parent.GetLimit();
                 index() = copy;
                 count = 0;
