@@ -135,7 +135,7 @@ namespace ToSParser
 
         public Parent2 GetFalse() => parent2;
 
-        public RootParser Evaluate(bool condition, Func<Parent1, RootParser> ifTrue, Func<Parent2, RootParser> ifFalse) => condition ? ifTrue(parent1) : ifFalse(parent2);
+        public RootParser Parse(bool condition, Func<Parent1, RootParser> ifTrue, Func<Parent2, RootParser> ifFalse) => condition ? ifTrue(parent1) : ifFalse(parent2);
 
         public ConditionalParser<Parent1, Parent2> Copy(byte[] buffer, BufferIndex index, int size) => new ConditionalParser<Parent1, Parent2>(buffer, index, size, parent1.Copy(buffer, index, size), parent2.Copy(buffer, index, size));
     }
