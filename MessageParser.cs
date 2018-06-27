@@ -366,7 +366,7 @@ namespace ToSParser
         {
             int limit = index();
             int copy = index();
-            while (limit < size)
+            while (limit <= size)
             {
                 limit = parent.GetLimit();
                 index() = copy;
@@ -486,11 +486,11 @@ namespace ToSParser
 
         internal static readonly ParserBuilder<Parser<byte, Parser<byte, RootParser>>, Writer<byte, Writer<byte, RootWriter>>> BYTE2 = BYTE.After(Converters.Byte<byte>());
         internal static readonly ParserBuilder<Parser<PlayerID, Parser<string, RootParser>>, Writer<PlayerID, Writer<string, RootWriter>>> PLAYER_STRING = STRING.After(Converters.Byte<PlayerID>());
-        internal static readonly ParserBuilder<Parser<PlayerID, Parser<byte, RootParser>>, Writer<PlayerID, Writer<byte, RootWriter>>> PLAYER_BYTE = BYTE.After(Converters.Byte<PlayerID>());
+        internal static readonly ParserBuilder<Parser<PlayerID, Parser<byte, RootParser>>, Writer<PlayerID, Writer<byte, RootWriter>>> PLAYER_RAWBYTE = ROOT.After(Converters.Byte<byte>(0u)).After(Converters.Byte<PlayerID>());
         internal static readonly ParserBuilder<Parser<PlayerID, Parser<PlayerID, RootParser>>, Writer<PlayerID, Writer<PlayerID, RootWriter>>> PLAYER2 = PLAYER.After(Converters.Byte<PlayerID>());
         internal static readonly ParserBuilder<Parser<PlayerID, Parser<RoleID, RootParser>>, Writer<PlayerID, Writer<RoleID, RootWriter>>> PLAYER_ROLE = ROLE.After(Converters.Byte<PlayerID>());
 
-        internal static readonly ParserBuilder<Parser<PlayerID, Parser<PlayerID, Parser<byte, RootParser>>>, Writer<PlayerID, Writer<PlayerID, Writer<byte, RootWriter>>>> PLAYER2_BYTE = PLAYER_BYTE.After(Converters.Byte<PlayerID>());
+        internal static readonly ParserBuilder<Parser<PlayerID, Parser<PlayerID, Parser<byte, RootParser>>>, Writer<PlayerID, Writer<PlayerID, Writer<byte, RootWriter>>>> PLAYER2_RAWBYTE = PLAYER_RAWBYTE.After(Converters.Byte<PlayerID>());
         internal static readonly ParserBuilder<Parser<PlayerID, Parser<TauntTargetType, Parser<TauntID, RootParser>>>, Writer<PlayerID, Writer<TauntTargetType, Writer<TauntID, RootWriter>>>> PLAYER_TYPE_TAUNT = ROOT.After(Converters.Byte<TauntID>()).After(Converters.Byte<TauntTargetType>()).After(Converters.Byte<PlayerID>());
 
         internal static readonly ParserBuilder<Parser<string, Parser<string, RootParser>>, Writer<string, Writer<string, RootWriter>>> STRING2_ASTERISK = ROOT.After(Converters.STRING, 0x2A).After(Converters.STRING);
@@ -516,7 +516,7 @@ namespace ToSParser
 
         public static Converter<T> UInt<T>() where T : IConvertible => new ConverterImpl<T>(ToUInt<T>, FromUInt);
 
-        public static Converter<T> Byte<T>() where T : IConvertible => new ConverterImpl<T>(ToByte<T>, FromByte);
+        public static Converter<T> Byte<T>(uint offset = 1u) where T : IConvertible => new ConverterImpl<T>(ToByte<T>(offset), FromByte<T>(offset));
 
         public static Converter<Option<R>> Optional<R>(Converter<R> converter) => new ConverterImpl<Option<R>>((byte[] buffer, ref int index, int count) => { try { return converter.FromBytes(buffer, ref index, count).SomeNotNull(); } catch (Exception) { return Option.None<R>(); } }, (byte[] buffer, ref int index, Option<R> value) => { if (value.HasValue) converter.ToBytes(buffer, ref index, value.ValueOr(default(R))); });
 
@@ -538,7 +538,17 @@ namespace ToSParser
                 this.to = to;
             }
 
-            public T FromBytes(byte[] buffer, ref int index, int count) => from(buffer, ref index, count);
+            public T FromBytes(byte[] buffer, ref int index, int count)
+            {
+                int oldIndex = index;
+                T result = from(buffer, ref index, count);
+                if (index > oldIndex + count)
+                {
+                    index = oldIndex;
+                    throw new ArgumentException("insufficient data");
+                }
+                return result;
+            }
 
             public void ToBytes(byte[] buffer, ref int index, T value) => to(buffer, ref index, value);
         }
@@ -564,7 +574,8 @@ namespace ToSParser
         private static void FromUInt<T>(byte[] buffer, ref int index, T value) where T : IConvertible => FromString(buffer, ref index, Convert.ToUInt32(value).ToString());
 
         private static T ToByte<T>(byte[] buffer, ref int index, int count) where T : IConvertible => (buffer[index++] - 1u).To<T>();
-        private static void FromByte<T>(byte[] buffer, ref int index, T value) where T : IConvertible => buffer[index++] = (byte)(Convert.ToUInt32(value) + 1u);
+        private static FromBytes<T> ToByte<T>(uint offset) where T : IConvertible => (byte[] buffer, ref int index, int count) => (buffer[index++] - offset).To<T>();
+        private static ToBytes<T> FromByte<T>(uint offset) where T : IConvertible => (byte[] buffer, ref int index, T value) => buffer[index++] = (byte)(Convert.ToUInt32(value) + offset);
 
         private static T To<T>(this uint value) where T : IConvertible => (T)(typeof(T).IsEnum ? Enum.Parse(typeof(T), value.ToString()) : Convert.ChangeType(value, typeof(T)));
     }
@@ -603,7 +614,7 @@ namespace ToSParser
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Exception thrown in read callback: {0}", e.Message);
+                        Debug.WriteLine("Exception thrown in read callback");
                         Debug.WriteLine(e);
                     }
                     length = 0;
@@ -627,7 +638,7 @@ namespace ToSParser
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Exception thrown in write callback: {0}", e.Message);
+                        Debug.WriteLine("Exception thrown in write callback");
                         Debug.WriteLine(e);
                     }
                     break;

@@ -23,9 +23,9 @@ namespace ToSParser
         PLAYER_13,
         PLAYER_14,
         PLAYER_15,
-        JAILOR = 30,
-        MEDIUM = 45,
-        MAFIA = 60,
-        VAMPIRE = 75
+        JAILOR = 29,
+        MEDIUM = 44,
+        MAFIA = 59,
+        VAMPIRE = 74
     }
 }

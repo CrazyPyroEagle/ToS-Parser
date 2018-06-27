@@ -247,7 +247,7 @@ namespace ToSParser
         public static readonly RootBuilder SET_HOST = Parsers.ROOT;
         public static readonly ParserBuilder<Parser<bool, Parser<bool, Parser<string, Parser<PlayerID, Parser<LobbyIconID, RootParser>>>>>, Writer<bool, Writer<bool, Writer<string, Writer<PlayerID, Writer<LobbyIconID, RootWriter>>>>>> USER_JOINED_GAME = Parsers.ROOT.After(Converters.Byte<LobbyIconID>()).After(Converters.Byte<PlayerID>(), 0x2A).After(Converters.STRING).After(Converters.BOOLEAN1).After(Converters.BOOLEAN1);
         public static readonly ParserBuilder<Parser<bool, Parser<bool, Parser<PlayerID, RootParser>>>, Writer<bool, Writer<bool, Writer<PlayerID, RootWriter>>>> USER_LEFT_GAME = Parsers.ROOT.After(Converters.Byte<PlayerID>()).After(Converters.BOOLEAN1).After(Converters.BOOLEAN1);
-        public static readonly ParserBuilder<Parser<PlayerID, Parser<string, RootParser>>, Writer<PlayerID, Writer<string, RootWriter>>> CHAT_BOX_MESSAGE = Parsers.PLAYER_STRING;
+        public static readonly ParserBuilder<ConditionalParser<Parser<PlayerID, Parser<string, RootParser>>, Parser<PlayerID, Parser<string, RootParser>>>, ConditionalWriter<Writer<PlayerID, Writer<string, RootWriter>>, Writer<PlayerID, Writer<string, RootWriter>>>> CHAT_BOX_MESSAGE = Parsers.PLAYER_STRING.Condition(Parsers.STRING.After(Converters.Byte<PlayerID>(), 0xFF));
         public static readonly ParserBuilder<Parser<CatalogID, RootParser>, Writer<CatalogID, RootWriter>> HOST_CLICKED_ON_CATALOG = Parsers.CATALOG;
         public static readonly ParserBuilder<Parser<byte, Parser<byte, RootParser>>, Writer<byte, Writer<byte, RootWriter>>> HOST_CLICKED_ON_POSSIBLE_ROLES = Parsers.BYTE2;
         public static readonly ParserBuilder<Parser<RoleID, RootParser>, Writer<RoleID, RootWriter>> HOST_CLICKED_ON_ADD_BUTTON = Parsers.ROLE;
@@ -333,15 +333,15 @@ namespace ToSParser
         public static readonly RootBuilder START_DAY = Parsers.ROOT;
         public static readonly ParserBuilder<Parser<PlayerID, Parser<RoleID, Parser<bool, RepeatParser<Parser<DeathCauseID, RootParser>, RootParser>>>>, Writer<PlayerID, Writer<RoleID, Writer<bool, RepeatWriter<Writer<DeathCauseID, RootWriter>, RootWriter>>>>> WHO_DIED_AND_HOW = Parsers.ROOT.Repeat(0, Parsers.ROOT.After(Converters.Byte<DeathCauseID>())).After(Converters.BOOLEAN1).After(Converters.Byte<RoleID>()).After(Converters.Byte<PlayerID>());
         public static readonly RootBuilder START_DISCUSSION = Parsers.ROOT;
-        public static readonly ParserBuilder<Parser<byte, RootParser>, Writer<byte, RootWriter>> START_VOTING = Parsers.BYTE;
+        public static readonly ParserBuilder<Parser<bool, RootParser>, Writer<bool, RootWriter>> START_VOTING = Parsers.ROOT.After(Converters.BOOLEAN2);
         public static readonly ParserBuilder<Parser<PlayerID, RootParser>, Writer<PlayerID, RootWriter>> START_DEFENSE_TRANSITION = Parsers.PLAYER;
         public static readonly RootBuilder START_JUDGEMENT = Parsers.ROOT;
         public static readonly ParserBuilder<Parser<byte, Parser<byte, RootParser>>, Writer<byte, Writer<byte, RootWriter>>> TRIAL_FOUND_GUILTY = Parsers.BYTE2;
         public static readonly ParserBuilder<Parser<byte, Parser<byte, RootParser>>, Writer<byte, Writer<byte, RootWriter>>> TRIAL_FOUND_NOT_GUILTY = Parsers.BYTE2;
         public static readonly ParserBuilder<Parser<PlayerID, RootParser>, Writer<PlayerID, RootWriter>> LOOKOUT_NIGHT_ABILITY_MESSAGE = Parsers.PLAYER;
-        public static readonly ParserBuilder<Parser<PlayerID, Parser<PlayerID, Parser<byte, RootParser>>>, Writer<PlayerID, Writer<PlayerID, Writer<byte, RootWriter>>>> USER_VOTED = Parsers.PLAYER2_BYTE;
-        public static readonly ParserBuilder<Parser<PlayerID, Parser<PlayerID, Parser<byte, RootParser>>>, Writer<PlayerID, Writer<PlayerID, Writer<byte, RootWriter>>>> USER_CANCELED_VOTE = Parsers.PLAYER2_BYTE;
-        public static readonly ParserBuilder<Parser<PlayerID, Parser<PlayerID, Parser<PlayerID, Parser<byte, RootParser>>>>, Writer<PlayerID, Writer<PlayerID, Writer<PlayerID, Writer<byte, RootWriter>>>>> USER_CHANGED_VOTE = Parsers.ROOT.After(Converters.Byte<byte>()).After(Converters.Byte<PlayerID>()).After(Converters.Byte<PlayerID>()).After(Converters.Byte<PlayerID>());
+        public static readonly ParserBuilder<Parser<PlayerID, Parser<PlayerID, Parser<byte, RootParser>>>, Writer<PlayerID, Writer<PlayerID, Writer<byte, RootWriter>>>> USER_VOTED = Parsers.PLAYER2_RAWBYTE;
+        public static readonly ParserBuilder<Parser<PlayerID, Parser<PlayerID, Parser<byte, RootParser>>>, Writer<PlayerID, Writer<PlayerID, Writer<byte, RootWriter>>>> USER_CANCELED_VOTE = Parsers.PLAYER2_RAWBYTE;
+        public static readonly ParserBuilder<Parser<PlayerID, Parser<PlayerID, Parser<PlayerID, Parser<byte, RootParser>>>>, Writer<PlayerID, Writer<PlayerID, Writer<PlayerID, Writer<byte, RootWriter>>>>> USER_CHANGED_VOTE = Parsers.ROOT.After(Converters.Byte<byte>(0u)).After(Converters.Byte<PlayerID>()).After(Converters.Byte<PlayerID>()).After(Converters.Byte<PlayerID>());
         public static readonly ParserBuilder<Parser<bool, RootParser>, Writer<bool, RootWriter>> USER_DIED = Parsers.BOOLEAN;
         public static readonly ParserBuilder<Parser<PlayerID, Parser<RoleID, RootParser>>, Writer<PlayerID, Writer<RoleID, RootWriter>>> RESURRECTION = Parsers.PLAYER_ROLE;
         public static readonly ParserBuilder<RepeatParser<Parser<RoleID, RootParser>, RootParser>, RepeatWriter<Writer<RoleID, RootWriter>, RootWriter>> TELL_ROLE_LIST = Parsers.ROOT.Repeat(0, Parsers.ROLE);
@@ -447,7 +447,7 @@ namespace ToSParser
         public static readonly ParserBuilder<Parser<PlayerID, RootParser>, Writer<PlayerID, RootWriter>> VIP_TARGET = Parsers.PLAYER;
         public static readonly ParserBuilder<Parser<DuelAttackID, Parser<DuelDefenseID, RootParser>>, Writer<DuelAttackID, Writer<DuelDefenseID, RootWriter>>> PIRATE_DUEL_OUTCOME = Parsers.ROOT.After(Converters.Byte<DuelDefenseID>()).After(Converters.Byte<DuelAttackID>());
         public static readonly ParserBuilder<Parser<BrandID, Parser<GameModeID, Parser<SetConfigResult, RootParser>>>, Writer<BrandID, Writer<GameModeID, Writer<SetConfigResult, RootWriter>>>> HOST_SET_PARTY_CONFIG_RESULT = Parsers.ROOT.After(Converters.Byte<SetConfigResult>()).After(Converters.Byte<GameModeID>()).After(Converters.Byte<BrandID>());
-        public static readonly ParserBuilder<RepeatParser<Parser<GameModeID, RootParser>, RootParser>, RepeatWriter<Writer<GameModeID, RootWriter>, RootWriter>> ACTIVE_GAME_MODES = Parsers.ROOT.Repeat(1, Parsers.ROOT_COMMA.After(Converters.Byte<GameModeID>()));
+        public static readonly ParserBuilder<RepeatParser<Parser<GameModeID, RootParser>, RootParser>, RepeatWriter<Writer<GameModeID, RootWriter>, RootWriter>> ACTIVE_GAME_MODES = Parsers.ROOT.Repeat(0, Parsers.GAMEMODE);
         public static readonly ParserBuilder<Parser<AccountFlags, RootParser>, Writer<AccountFlags, RootWriter>> ACCOUNT_FLAGS = Parsers.ROOT.After(Converters.Byte<AccountFlags>());
         public static readonly ParserBuilder<Parser<PlayerID, RootParser>, Writer<PlayerID, RootWriter>> ZOMBIE_ROTTED = Parsers.PLAYER;
         public static readonly ParserBuilder<Parser<PlayerID, RootParser>, Writer<PlayerID, RootWriter>> LOVER_TARGET = Parsers.PLAYER;
@@ -464,7 +464,7 @@ namespace ToSParser
         public static void SetHost(this MessageParser parser) => parser.Parse((byte)ServerMessageType.SET_HOST, SET_HOST.Build);
         public static void UserJoinedGame(this MessageParser parser, bool host, bool display, string username, PlayerID id, LobbyIconID icon) => parser.Parse((byte)ServerMessageType.USER_JOINED_GAME, (buffer, index) => USER_JOINED_GAME.Build(buffer, index).Parse(host).Parse(display).Parse(username).Parse(id).Parse(icon));
         public static void UserLeftGame(this MessageParser parser, bool update, bool display, PlayerID id) => parser.Parse((byte)ServerMessageType.USER_LEFT_GAME, (buffer, index) => USER_LEFT_GAME.Build(buffer, index).Parse(update).Parse(display).Parse(id));
-        public static void ChatBoxMessage(this MessageParser parser, PlayerID id, string message) => parser.Parse((byte)ServerMessageType.CHAT_BOX_MESSAGE, (buffer, index) => CHAT_BOX_MESSAGE.Build(buffer, index).Parse(id).Parse(message));
+        public static void ChatBoxMessage(this MessageParser parser, PlayerID id, string message, bool inGame) => parser.Parse((byte)ServerMessageType.CHAT_BOX_MESSAGE, (buffer, index) => CHAT_BOX_MESSAGE.Build(buffer, index).Parse(inGame, p => p.Parse(id).Parse(message), p => p.Parse(id).Parse(message)));
         public static void HostClickedOnCatalog(this MessageParser parser, CatalogID catalog) => parser.Parse((byte)ServerMessageType.HOST_CLICKED_ON_CATALOG, (buffer, index) => HOST_CLICKED_ON_CATALOG.Build(buffer, index).Parse(catalog));
         public static void HostClickedOnPossibleRoles(this MessageParser parser, byte selectedIndex, byte scrollPosition) => parser.Parse((byte)ServerMessageType.HOST_CLICKED_ON_POSSIBLE_ROLES, (buffer, index) => HOST_CLICKED_ON_POSSIBLE_ROLES.Build(buffer, index).Parse(selectedIndex).Parse(scrollPosition));
         public static void HostClickedOnAddButton(this MessageParser parser, RoleID role) => parser.Parse((byte)ServerMessageType.HOST_CLICKED_ON_ADD_BUTTON, (buffer, index) => HOST_CLICKED_ON_ADD_BUTTON.Build(buffer, index).Parse(role));
@@ -550,7 +550,7 @@ namespace ToSParser
         public static void StartDay(this MessageParser parser) => parser.Parse((byte)ServerMessageType.START_DAY, START_DAY.Build);
         public static void WhoDiedAndHow(this MessageParser parser, PlayerID player, RoleID role, bool announce, params DeathCauseID[] causes) => parser.Parse((byte)ServerMessageType.WHO_DIED_AND_HOW, (buffer, index) => WHO_DIED_AND_HOW.Build(buffer, index).Parse(player).Parse(role).Parse(announce).Parse(causes, (cause, p) => p.Parse(cause)));
         public static void StartDiscussion(this MessageParser parser) => parser.Parse((byte)ServerMessageType.START_DISCUSSION, START_DISCUSSION.Build);
-        public static void StartVoting(this MessageParser parser, byte votesNeeded) => parser.Parse((byte)ServerMessageType.START_VOTING, (buffer, index) => START_VOTING.Build(buffer, index).Parse(votesNeeded));
+        public static void StartVoting(this MessageParser parser, bool showVotesNeeded) => parser.Parse((byte)ServerMessageType.START_VOTING, (buffer, index) => START_VOTING.Build(buffer, index).Parse(showVotesNeeded));
         public static void StartDefenseTransition(this MessageParser parser, PlayerID player) => parser.Parse((byte)ServerMessageType.START_DEFENSE_TRANSITION, (buffer, index) => START_DEFENSE_TRANSITION.Build(buffer, index).Parse(player));
         public static void StartJudgement(this MessageParser parser) => parser.Parse((byte)ServerMessageType.START_JUDGEMENT, START_JUDGEMENT.Build);
         public static void TrialFoundGuilty(this MessageParser parser, byte guiltyVotes, byte innocentVotes) => parser.Parse((byte)ServerMessageType.TRIAL_FOUND_GUILTY, (buffer, index) => TRIAL_FOUND_GUILTY.Build(buffer, index).Parse(guiltyVotes).Parse(innocentVotes));
