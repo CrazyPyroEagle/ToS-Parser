@@ -333,7 +333,7 @@ namespace ToSParser
         public static readonly RootBuilder START_DAY = Parsers.ROOT;
         public static readonly ParserBuilder<Parser<PlayerID, Parser<RoleID, Parser<bool, RepeatParser<Parser<DeathCauseID, RootParser>, RootParser>>>>, Writer<PlayerID, Writer<RoleID, Writer<bool, RepeatWriter<Writer<DeathCauseID, RootWriter>, RootWriter>>>>> WHO_DIED_AND_HOW = Parsers.ROOT.Repeat(0, Parsers.ROOT.After(Converters.Byte<DeathCauseID>())).After(Converters.BOOLEAN1).After(Converters.Byte<RoleID>()).After(Converters.Byte<PlayerID>());
         public static readonly RootBuilder START_DISCUSSION = Parsers.ROOT;
-        public static readonly ParserBuilder<Parser<bool, RootParser>, Writer<bool, RootWriter>> START_VOTING = Parsers.ROOT.After(Converters.BOOLEAN2);
+        public static readonly ParserBuilder<Parser<bool, RootParser>, Writer<bool, RootWriter>> START_VOTING = Parsers.ROOT.After(Converters.Boolean(Converters.Byte<byte>(30u)));
         public static readonly ParserBuilder<Parser<PlayerID, RootParser>, Writer<PlayerID, RootWriter>> START_DEFENSE_TRANSITION = Parsers.PLAYER;
         public static readonly RootBuilder START_JUDGEMENT = Parsers.ROOT;
         public static readonly ParserBuilder<Parser<byte, Parser<byte, RootParser>>, Writer<byte, Writer<byte, RootWriter>>> TRIAL_FOUND_GUILTY = Parsers.BYTE2;

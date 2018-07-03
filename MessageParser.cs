@@ -2,9 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace ToSParser
 {
@@ -577,7 +576,7 @@ namespace ToSParser
         private static FromBytes<T> ToByte<T>(uint offset) where T : IConvertible => (byte[] buffer, ref int index, int count) => (buffer[index++] - offset).To<T>();
         private static ToBytes<T> FromByte<T>(uint offset) where T : IConvertible => (byte[] buffer, ref int index, T value) => buffer[index++] = (byte)(Convert.ToUInt32(value) + offset);
 
-        private static T To<T>(this uint value) where T : IConvertible => (T)(typeof(T).IsEnum ? Enum.Parse(typeof(T), value.ToString()) : Convert.ChangeType(value, typeof(T)));
+        private static T To<T>(this uint value) where T : IConvertible => (T)(typeof(T).GetTypeInfo().IsEnum ? Enum.Parse(typeof(T), value.ToString()) : Convert.ChangeType(value, typeof(T)));
     }
 
     public class MessageParser
@@ -586,8 +585,8 @@ namespace ToSParser
         //public delegate RootParser PartialWriter<P>(P parser, byte[] buffer, ref int index) where P : UnknownParser;
         //public delegate RootParser PartialReader<P>(P parser, byte[] buffer, ref int index, int length) where P : UnknownParser;
 
-        private Action<byte[], int, int> onRead;
-        private Action<byte[], int, int> onWrite;
+        private readonly Action<byte[], int, int> onRead;
+        private readonly Action<byte[], int, int> onWrite;
         private byte[] read;
         private byte[] write;
         private int length;
