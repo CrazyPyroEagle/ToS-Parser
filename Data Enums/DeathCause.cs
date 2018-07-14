@@ -1,0 +1,32 @@
+﻿namespace ToSParser
+{
+    public enum DeathCause : byte
+    {
+        JAILOR,
+        VIGILANTE,
+        MAFIA,
+        ARSONIST,
+        SERIAL_KILLER,
+        SUICIDE,
+        JESTER,
+        PROTECTING,
+        BODYGUARD,
+        VETERAN,
+        GUILT,
+        WEREWOLF,
+        VAMPIRE_HUNTER,
+        VAMPIRE,
+        CRUSADER,
+        TRAPPER,
+        AMBUSHER,
+        PESTILENCE,
+        JUGGERNAUT,
+        PIRATE,
+        COVEN_LEADER,
+        POTION_MASTER,
+        HEX_MASTER,
+        GHOUL,
+        POISONER,
+        MEDUSA
+    }
+}

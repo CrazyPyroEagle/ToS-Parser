@@ -476,21 +476,21 @@ namespace ToSParser
         internal static readonly ParserBuilder<Parser<uint, RootParser>, Writer<uint, RootWriter>> UINT = ROOT.After(Converters.UInt<uint>());
         internal static readonly ParserBuilder<Parser<byte, RootParser>, Writer<byte, RootWriter>> BYTE = ROOT.After(Converters.Byte<byte>());
         internal static readonly ParserBuilder<Parser<bool, RootParser>, Writer<bool, RootWriter>> BOOLEAN = ROOT.After(Converters.BOOLEAN1);
-        internal static readonly ParserBuilder<Parser<BrandID, RootParser>, Writer<BrandID, RootWriter>> BRAND = ROOT.After(Converters.Byte<BrandID>());
-        internal static readonly ParserBuilder<Parser<GameModeID, RootParser>, Writer<GameModeID, RootWriter>> GAMEMODE = ROOT.After(Converters.Byte<GameModeID>());
-        internal static readonly ParserBuilder<Parser<CatalogID, RootParser>, Writer<CatalogID, RootWriter>> CATALOG = ROOT.After(Converters.Byte<CatalogID>());
-        internal static readonly ParserBuilder<Parser<PlayerID, RootParser>, Writer<PlayerID, RootWriter>> PLAYER = ROOT.After(Converters.Byte<PlayerID>());
-        internal static readonly ParserBuilder<Parser<RoleID, RootParser>, Writer<RoleID, RootWriter>> ROLE = ROOT.After(Converters.Byte<RoleID>());
-        internal static readonly ParserBuilder<Parser<LocalizationTableID, RootParser>, Writer<LocalizationTableID, RootWriter>> LOCALIZATION = ROOT.After(Converters.Byte<LocalizationTableID>());
+        internal static readonly ParserBuilder<Parser<Brand, RootParser>, Writer<Brand, RootWriter>> BRAND = ROOT.After(Converters.Byte<Brand>());
+        internal static readonly ParserBuilder<Parser<GameMode, RootParser>, Writer<GameMode, RootWriter>> GAMEMODE = ROOT.After(Converters.Byte<GameMode>());
+        internal static readonly ParserBuilder<Parser<Catalog, RootParser>, Writer<Catalog, RootWriter>> CATALOG = ROOT.After(Converters.Byte<Catalog>());
+        internal static readonly ParserBuilder<Parser<Player, RootParser>, Writer<Player, RootWriter>> PLAYER = ROOT.After(Converters.Byte<Player>());
+        internal static readonly ParserBuilder<Parser<Role, RootParser>, Writer<Role, RootWriter>> ROLE = ROOT.After(Converters.Byte<Role>());
+        internal static readonly ParserBuilder<Parser<LocalizationTable, RootParser>, Writer<LocalizationTable, RootWriter>> LOCALIZATION = ROOT.After(Converters.Byte<LocalizationTable>());
 
         internal static readonly ParserBuilder<Parser<byte, Parser<byte, RootParser>>, Writer<byte, Writer<byte, RootWriter>>> BYTE2 = BYTE.After(Converters.Byte<byte>());
-        internal static readonly ParserBuilder<Parser<PlayerID, Parser<string, RootParser>>, Writer<PlayerID, Writer<string, RootWriter>>> PLAYER_STRING = STRING.After(Converters.Byte<PlayerID>());
-        internal static readonly ParserBuilder<Parser<PlayerID, Parser<byte, RootParser>>, Writer<PlayerID, Writer<byte, RootWriter>>> PLAYER_RAWBYTE = ROOT.After(Converters.Byte<byte>(0u)).After(Converters.Byte<PlayerID>());
-        internal static readonly ParserBuilder<Parser<PlayerID, Parser<PlayerID, RootParser>>, Writer<PlayerID, Writer<PlayerID, RootWriter>>> PLAYER2 = PLAYER.After(Converters.Byte<PlayerID>());
-        internal static readonly ParserBuilder<Parser<PlayerID, Parser<RoleID, RootParser>>, Writer<PlayerID, Writer<RoleID, RootWriter>>> PLAYER_ROLE = ROLE.After(Converters.Byte<PlayerID>());
+        internal static readonly ParserBuilder<Parser<Player, Parser<string, RootParser>>, Writer<Player, Writer<string, RootWriter>>> PLAYER_STRING = STRING.After(Converters.Byte<Player>());
+        internal static readonly ParserBuilder<Parser<Player, Parser<byte, RootParser>>, Writer<Player, Writer<byte, RootWriter>>> PLAYER_RAWBYTE = ROOT.After(Converters.Byte<byte>(0u)).After(Converters.Byte<Player>());
+        internal static readonly ParserBuilder<Parser<Player, Parser<Player, RootParser>>, Writer<Player, Writer<Player, RootWriter>>> PLAYER2 = PLAYER.After(Converters.Byte<Player>());
+        internal static readonly ParserBuilder<Parser<Player, Parser<Role, RootParser>>, Writer<Player, Writer<Role, RootWriter>>> PLAYER_ROLE = ROLE.After(Converters.Byte<Player>());
 
-        internal static readonly ParserBuilder<Parser<PlayerID, Parser<PlayerID, Parser<byte, RootParser>>>, Writer<PlayerID, Writer<PlayerID, Writer<byte, RootWriter>>>> PLAYER2_RAWBYTE = PLAYER_RAWBYTE.After(Converters.Byte<PlayerID>());
-        internal static readonly ParserBuilder<Parser<PlayerID, Parser<TauntTargetType, Parser<TauntID, RootParser>>>, Writer<PlayerID, Writer<TauntTargetType, Writer<TauntID, RootWriter>>>> PLAYER_TYPE_TAUNT = ROOT.After(Converters.Byte<TauntID>()).After(Converters.Byte<TauntTargetType>()).After(Converters.Byte<PlayerID>());
+        internal static readonly ParserBuilder<Parser<Player, Parser<Player, Parser<byte, RootParser>>>, Writer<Player, Writer<Player, Writer<byte, RootWriter>>>> PLAYER2_RAWBYTE = PLAYER_RAWBYTE.After(Converters.Byte<Player>());
+        internal static readonly ParserBuilder<Parser<Player, Parser<TauntTargetType, Parser<Taunt, RootParser>>>, Writer<Player, Writer<TauntTargetType, Writer<Taunt, RootWriter>>>> PLAYER_TYPE_TAUNT = ROOT.After(Converters.Byte<Taunt>()).After(Converters.Byte<TauntTargetType>()).After(Converters.Byte<Player>());
 
         internal static readonly ParserBuilder<Parser<string, Parser<string, RootParser>>, Writer<string, Writer<string, RootWriter>>> STRING2_ASTERISK = ROOT.After(Converters.STRING, 0x2A).After(Converters.STRING);
         internal static readonly ParserBuilder<Parser<string, Parser<uint, RootParser>>, Writer<string, Writer<uint, RootWriter>>> STRING_UINT_ASTERISK = ROOT.After(Converters.UInt<uint>(), 0x2A).After(Converters.STRING);
@@ -498,9 +498,9 @@ namespace ToSParser
         internal static readonly ParserBuilder<Parser<string, Parser<uint, Parser<OnlineStatus, Parser<bool, RootParser>>>>, Writer<string, Writer<uint, Writer<OnlineStatus, Writer<bool, RootWriter>>>>> STRING_UINT_ONLINE_BOOLEAN_COMMA = new RootBuilder(0x2A).After(Converters.BOOLEAN2, 0x2C).After(Converters.Byte<OnlineStatus>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.STRING);
         internal static readonly ParserBuilder<Parser<uint, Parser<uint, Parser<uint, Parser<uint, Parser<uint, RootParser>>>>>, Writer<uint, Writer<uint, Writer<uint, Writer<uint, Writer<uint, RootWriter>>>>>> UINT5_COMMA = new RootBuilder(0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<uint>());
 
-        internal static readonly ParserBuilder<RepeatParser<Parser<PlayerID, RootParser>, RootParser>, RepeatWriter<Writer<PlayerID, RootWriter>, RootWriter>> REPEAT_PLAYER = ROOT.Repeat(0, PLAYER);
-        internal static readonly ParserBuilder<RepeatParser<Parser<AchievementID, RootParser>, RootParser>, RepeatWriter<Writer<AchievementID, RootWriter>, RootWriter>> REPEAT_ACHIEVEMENT = ROOT.Repeat(1, ROOT_COMMA.After(Converters.UInt<AchievementID>()));
-        internal static readonly ParserBuilder<RepeatParser<Parser<PlayerID, Parser<RoleID, RootParser>>, RootParser>, RepeatWriter<Writer<PlayerID, Writer<RoleID, RootWriter>>, RootWriter>> REPEAT_PLAYER_ROLE = ROOT.Repeat(0, PLAYER_ROLE);
+        internal static readonly ParserBuilder<RepeatParser<Parser<Player, RootParser>, RootParser>, RepeatWriter<Writer<Player, RootWriter>, RootWriter>> REPEAT_PLAYER = ROOT.Repeat(0, PLAYER);
+        internal static readonly ParserBuilder<RepeatParser<Parser<Achievement, RootParser>, RootParser>, RepeatWriter<Writer<Achievement, RootWriter>, RootWriter>> REPEAT_ACHIEVEMENT = ROOT.Repeat(1, ROOT_COMMA.After(Converters.UInt<Achievement>()));
+        internal static readonly ParserBuilder<RepeatParser<Parser<Player, Parser<Role, RootParser>>, RootParser>, RepeatWriter<Writer<Player, Writer<Role, RootWriter>>, RootWriter>> REPEAT_PLAYER_ROLE = ROOT.Repeat(0, PLAYER_ROLE);
     }
 
     public static class Converters
