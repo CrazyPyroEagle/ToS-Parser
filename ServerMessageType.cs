@@ -247,7 +247,7 @@ namespace ToSParser
         public static readonly RootBuilder SET_HOST = Parsers.ROOT;
         public static readonly ParserBuilder<Parser<bool, Parser<bool, Parser<string, Parser<Player, Parser<LobbyIcon, RootParser>>>>>, Writer<bool, Writer<bool, Writer<string, Writer<Player, Writer<LobbyIcon, RootWriter>>>>>> USER_JOINED_GAME = Parsers.ROOT.After(Converters.Byte<LobbyIcon>()).After(Converters.Byte<Player>(), 0x2A).After(Converters.STRING).After(Converters.BOOLEAN1).After(Converters.BOOLEAN1);
         public static readonly ParserBuilder<Parser<bool, Parser<bool, Parser<Player, RootParser>>>, Writer<bool, Writer<bool, Writer<Player, RootWriter>>>> USER_LEFT_GAME = Parsers.ROOT.After(Converters.Byte<Player>()).After(Converters.BOOLEAN1).After(Converters.BOOLEAN1);
-        public static readonly ParserBuilder<ConditionalParser<Parser<Player, Parser<string, RootParser>>, Parser<Player, Parser<string, RootParser>>>, ConditionalWriter<Writer<Player, Writer<string, RootWriter>>, Writer<Player, Writer<string, RootWriter>>>> CHAT_BOX_MESSAGE = Parsers.PLAYER_STRING.Condition(Parsers.STRING.After(Converters.Byte<Player>(), 0xFF));
+        public static readonly ParserBuilder<Parser<bool, Parser<Player, Parser<string, RootParser>>>, Writer<bool, Writer<Player, Writer<string, RootWriter>>>> CHAT_BOX_MESSAGE = Parsers.PLAYER_STRING.After(Converters.Optional(0xFF));
         public static readonly ParserBuilder<Parser<Catalog, RootParser>, Writer<Catalog, RootWriter>> HOST_CLICKED_ON_CATALOG = Parsers.CATALOG;
         public static readonly ParserBuilder<Parser<byte, Parser<byte, RootParser>>, Writer<byte, Writer<byte, RootWriter>>> HOST_CLICKED_ON_POSSIBLE_ROLES = Parsers.BYTE2;
         public static readonly ParserBuilder<Parser<Role, RootParser>, Writer<Role, RootWriter>> HOST_CLICKED_ON_ADD_BUTTON = Parsers.ROLE;
@@ -422,7 +422,7 @@ namespace ToSParser
         public static readonly ParserBuilder<RepeatParser<Parser<AccountItem, RootParser>, RootParser>, RepeatWriter<Writer<AccountItem, RootWriter>, RootWriter>> PURCHASED_ACCOUNT_ITEMS = Parsers.ROOT.Repeat(1, Parsers.ROOT_COMMA.After(Converters.UInt<AccountItem>()));
         public static readonly ParserBuilder<Parser<AccountItem, Parser<uint, Parser<uint, RootParser>>>, Writer<AccountItem, Writer<uint, Writer<uint, RootWriter>>>> ACCOUNT_ITEM_CONSUMED = Parsers.ROOT.After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<AccountItem>());
         public static readonly ParserBuilder<Parser<Player, Parser<Player, RootParser>>, Writer<Player, Writer<Player, RootWriter>>> TRANSPORTER_NOTIFICATION = Parsers.PLAYER2;
-        public static readonly ParserBuilder<Parser<ShopItem, Parser<uint, Parser<PurchaseSource, Parser<uint, Parser<PurchaseResult, Parser<ItemType, ConditionalParser<RepeatParser<Parser<ItemType, Parser<uint, RootParser>>, RootParser>, RootParser>>>>>>>, Writer<ShopItem, Writer<uint, Writer<PurchaseSource, Writer<uint, Writer<PurchaseResult, Writer<ItemType, ConditionalWriter<RepeatWriter<Writer<ItemType, Writer<uint, RootWriter>>, RootWriter>, RootWriter>>>>>>>> PRODUCT_PURCHASE_RESULT = Parsers.ROOT.Repeat(0, Parsers.ROOT.After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<ItemType>(), 0x2C)).Condition(Parsers.ROOT).After(Converters.UInt<ItemType>(), 0x2C).After(Converters.UInt<PurchaseResult>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<PurchaseSource>(), 0x2C).After(Converters.UInt<uint>()).After(Converters.UInt<ShopItem>());
+        public static readonly ParserBuilder<Parser<ShopItem, Parser<uint, Parser<PurchaseSource, Parser<uint, Parser<PurchaseResult, Parser<ItemType, RepeatParser<Parser<ItemType, Parser<uint, RootParser>>, RootParser>>>>>>>, Writer<ShopItem, Writer<uint, Writer<PurchaseSource, Writer<uint, Writer<PurchaseResult, Writer<ItemType, RepeatWriter<Writer<ItemType, Writer<uint, RootWriter>>, RootWriter>>>>>>>> PRODUCT_PURCHASE_RESULT = Parsers.ROOT.Repeat(0, Parsers.ROOT.After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<ItemType>(), 0x2C)).After(Converters.UInt<ItemType>(), 0x2C).After(Converters.UInt<PurchaseResult>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<PurchaseSource>(), 0x2C).After(Converters.UInt<uint>()).After(Converters.UInt<ShopItem>());
         public static readonly ParserBuilder<Parser<uint, RootParser>, Writer<uint, RootWriter>> UPDATE_FREE_CURRENCY = Parsers.UINT;
         public static readonly ParserBuilder<RepeatParser<Parser<uint, Parser<string, Parser<uint, Parser<uint, RootParser>>>>, RootParser>, RepeatWriter<Writer<uint, Writer<string, Writer<uint, Writer<uint, RootWriter>>>>, RootWriter>> ACTIVE_EVENTS = Parsers.ROOT.Repeat(1, new RootBuilder(0x2A).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.STRING, 0x2C).After(Converters.UInt<uint>()));
         public static readonly ParserBuilder<Parser<CauldronRewardType, Parser<uint, Parser<uint, Parser<bool, Parser<uint, RepeatParser<Parser<CauldronPotion, RootParser>, RepeatParser<Parser<ItemType, Parser<uint, Parser<uint, RootParser>>>, RootParser>>>>>>>, Writer<CauldronRewardType, Writer<uint, Writer<uint, Writer<bool, Writer<uint, RepeatWriter<Writer<CauldronPotion, RootWriter>, RepeatWriter<Writer<ItemType, Writer<uint, Writer<uint, RootWriter>>>, RootWriter>>>>>>>> CAULDRON_STATUS = Parsers.ROOT.Repeat(1, new RootBuilder(0x2A).After(Converters.UInt<uint>(), 0x7C).After(Converters.UInt<uint>(), 0x7C).After(Converters.UInt<ItemType>()), 0x2C).Repeat(0, Parsers.ROOT.After(Converters.UInt<CauldronPotion>()), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.BOOLEAN2, 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<uint>(), 0x2C).After(Converters.UInt<CauldronRewardType>());
@@ -464,7 +464,7 @@ namespace ToSParser
         public static void SetHost(this MessageParser parser) => parser.Parse((byte)ServerMessageType.SET_HOST, SET_HOST.Build);
         public static void UserJoinedGame(this MessageParser parser, bool host, bool display, string username, Player id, LobbyIcon icon) => parser.Parse((byte)ServerMessageType.USER_JOINED_GAME, (buffer, index) => USER_JOINED_GAME.Build(buffer, index).Parse(host).Parse(display).Parse(username).Parse(id).Parse(icon));
         public static void UserLeftGame(this MessageParser parser, bool update, bool display, Player id) => parser.Parse((byte)ServerMessageType.USER_LEFT_GAME, (buffer, index) => USER_LEFT_GAME.Build(buffer, index).Parse(update).Parse(display).Parse(id));
-        public static void ChatBoxMessage(this MessageParser parser, Player id, string message, bool inGame) => parser.Parse((byte)ServerMessageType.CHAT_BOX_MESSAGE, (buffer, index) => CHAT_BOX_MESSAGE.Build(buffer, index).Parse(inGame, p => p.Parse(id).Parse(message), p => p.Parse(id).Parse(message)));
+        public static void ChatBoxMessage(this MessageParser parser, bool inGame, Player id, string message) => parser.Parse((byte)ServerMessageType.CHAT_BOX_MESSAGE, (buffer, index) => CHAT_BOX_MESSAGE.Build(buffer, index).Parse(inGame).Parse(id).Parse(message));
         public static void HostClickedOnCatalog(this MessageParser parser, Catalog catalog) => parser.Parse((byte)ServerMessageType.HOST_CLICKED_ON_CATALOG, (buffer, index) => HOST_CLICKED_ON_CATALOG.Build(buffer, index).Parse(catalog));
         public static void HostClickedOnPossibleRoles(this MessageParser parser, byte selectedIndex, byte scrollPosition) => parser.Parse((byte)ServerMessageType.HOST_CLICKED_ON_POSSIBLE_ROLES, (buffer, index) => HOST_CLICKED_ON_POSSIBLE_ROLES.Build(buffer, index).Parse(selectedIndex).Parse(scrollPosition));
         public static void HostClickedOnAddButton(this MessageParser parser, Role role) => parser.Parse((byte)ServerMessageType.HOST_CLICKED_ON_ADD_BUTTON, (buffer, index) => HOST_CLICKED_ON_ADD_BUTTON.Build(buffer, index).Parse(role));
@@ -639,7 +639,7 @@ namespace ToSParser
         public static void PurchasedAccountItems(this MessageParser parser, params AccountItem[] items) => parser.Parse((byte)ServerMessageType.PURCHASED_ACCOUNT_ITEMS, (buffer, index) => PURCHASED_ACCOUNT_ITEMS.Build(buffer, index).Parse(items, (item, p) => p.Parse(item)));
         public static void AccountItemConsumed(this MessageParser parser, AccountItem item, uint consumed, uint remaining) => parser.Parse((byte)ServerMessageType.ACCOUNT_ITEM_CONSUMED, (buffer, index) => ACCOUNT_ITEM_CONSUMED.Build(buffer, index).Parse(item).Parse(consumed).Parse(remaining));
         public static void TransporterNotification(this MessageParser parser, Player player1, Player player2) => parser.Parse((byte)ServerMessageType.TRANSPORTER_NOTIFICATION, (buffer, index) => TRANSPORTER_NOTIFICATION.Build(buffer, index).Parse(player1).Parse(player2));
-        public static void ProductPurchaseResult(this MessageParser parser, ShopItem purchasedItem, uint quantity, PurchaseSource source, uint sourceData, PurchaseResult result, ItemType itemType, params (ItemType type, uint id)[] items) => parser.Parse((byte)ServerMessageType.PRODUCT_PURCHASE_RESULT, (buffer, index) => PRODUCT_PURCHASE_RESULT.Build(buffer, index).Parse(purchasedItem).Parse(quantity).Parse(source).Parse(sourceData).Parse(result).Parse(itemType).Parse(items.Length > 0, p => p.Parse(items, (item, p2) => p2.Parse(item.type).Parse(item.id)), p => p));
+        public static void ProductPurchaseResult(this MessageParser parser, ShopItem purchasedItem, uint quantity, PurchaseSource source, uint sourceData, PurchaseResult result, ItemType itemType, params (ItemType type, uint id)[] items) => parser.Parse((byte)ServerMessageType.PRODUCT_PURCHASE_RESULT, (buffer, index) => PRODUCT_PURCHASE_RESULT.Build(buffer, index).Parse(purchasedItem).Parse(quantity).Parse(source).Parse(sourceData).Parse(result).Parse(itemType).Parse(items, (item, p2) => p2.Parse(item.type).Parse(item.id)));
         public static void UpdateFreeCurrency(this MessageParser parser, uint amount) => parser.Parse((byte)ServerMessageType.UPDATE_FREE_CURRENCY, (buffer, index) => UPDATE_FREE_CURRENCY.Build(buffer, index).Parse(amount));
         public static void ActiveEvents(this MessageParser parser, params (uint type, string uiFilter, uint startingSeconds, uint endingSeconds)[] events) => parser.Parse((byte)ServerMessageType.ACTIVE_EVENTS, (buffer, index) => ACTIVE_EVENTS.Build(buffer, index).Parse(events, (evt, p) => p.Parse(evt.type).Parse(evt.uiFilter).Parse(evt.startingSeconds).Parse(evt.endingSeconds)));
         public static void CauldronStatus(this MessageParser parser, CauldronRewardType rewardType, uint progress, uint progressTarget, bool complete, uint freePotionCooldown, IEnumerable<CauldronPotion> purchasablePotions, params (ItemType type, uint id, uint quantity)[] rewards) => parser.Parse((byte)ServerMessageType.CAULDRON_STATUS, (buffer, index) => CAULDRON_STATUS.Build(buffer, index).Parse(rewardType).Parse(progress).Parse(progressTarget).Parse(complete).Parse(freePotionCooldown).Parse(purchasablePotions, (potion, p) => p.Parse(potion)).Parse(rewards, (reward, p) => p.Parse(reward.type).Parse(reward.id).Parse(reward.quantity)));
@@ -675,5 +675,1321 @@ namespace ToSParser
         public static void Disconnected(this MessageParser parser, DisconnectReason reason) => parser.Parse((byte)ServerMessageType.DISCONNECTED, (buffer, index) => DISCONNECTED.Build(buffer, index).Parse(reason));
         public static void SpyNightInfo(this MessageParser parser, params LocalizationTable[] messages) => parser.Parse((byte)ServerMessageType.SPY_NIGHT_INFO, (buffer, index) => SPY_NIGHT_INFO.Build(buffer, index).Parse(messages, (message, p) => p.Parse(message)));
         public static void ServerFlags(this MessageParser parser, params bool[] flags) => parser.Parse((byte)ServerMessageType.SERVER_FLAGS, (buffer, index) => SERVER_FLAGS.Build(buffer, index).Parse(flags, (flag, p) => p.Parse(flag)));
+    }
+
+    public class ServerMessageParser
+    {
+        public event Action<bool> Authenticated;
+        public event Action<bool, GameMode> CreateLobby;
+        public event Action SetHost;
+        public event Action<bool, bool, string, Player, LobbyIcon> UserJoinedGame;
+        public event Action<bool, bool, Player> UserLeftGame;
+        public event Action<bool, Player, string> ChatBoxMessage;
+        public event Action<Catalog> HostClickedOnCatalog;
+        public event Action<byte, byte> HostClickedOnPossibleRoles;
+        public event Action<Role> HostClickedOnAddButton;
+        public event Action<byte> HostClickedOnRemoveButton;
+        public event Action HostClickedOnStartButton;
+        public event Action CancelStartCooldown;
+        public event Action<Player> AssignNewHost;
+        public event Action<byte> VotedToRepickHost;
+        public event Action NoLongerHost;
+        public event Action DoNotSpam;
+        public event Action<uint, uint> HowManyPlayersAndGames;
+        public event Action<string> SystemMessage;
+        public event Action<LocalizationTable> StringTableMessage;
+        public event Action<IEnumerable<(string username, uint userID, OnlineStatus status, bool ownsCoven)>> FriendList;
+        public event Action<IEnumerable<(string username, uint userID)>> FriendRequestNotifications;
+        public event Action<bool> AddFriendRequestResponse;
+        public event Action<uint, OnlineStatus, bool> ConfirmFriendRequest;
+        public event Action<uint> SuccessfullyRemovedFriend;
+        public event Action SuccessfullyDeclinedFriendRequest;
+        public event Action<uint, OnlineStatus, bool> FriendUpdate;
+        public event Action<uint, bool, string> FriendMessage;
+        public event Action<string, uint, uint> UserInformation;
+        public event Action<Brand> CreatePartyLobby;
+        public event Action<string, FailedInvitationStatus> PartyInviteFailed;
+        public event Action<uint, string> PartyInviteNotification;
+        public event Action<AcceptInvitationResult> AcceptedPartyInvite;
+        public event Action<string, PendingInvitationStatus> PendingPartyInviteStatus;
+        public event Action SuccessfullyLeftParty;
+        public event Action<string, string> PartyChat;
+        public event Action<string> PartyMemberLeft;
+        public event Action<bool, bool, bool, bool, bool, bool, byte, byte, Language, byte, TipBehaviour> SettingsInformation;
+        public event Action<string, uint, OnlineStatus, bool> AddFriend;
+        public event Action ForcedLogout;
+        public event Action ReturnToHomePage;
+        public event Action ShopPurchaseSuccess;
+        public event Action<IEnumerable<Character>> PurchasedCharacters;
+        public event Action<IEnumerable<House>> PurchasedHouses;
+        public event Action<IEnumerable<Background>> PurchasedBackgrounds;
+        public event Action<Character, House, Background, Pet?, LobbyIcon, DeathAnimation, Scroll?, Scroll?, Scroll?, string> SelectionSettings;
+        public event Action<RedeemCodeResult, RedeemCodeReward?, string> RedeemCodeMessage;
+        public event Action<uint> UpdatePaidCurrency;
+        public event Action<IEnumerable<Pack>> PurchasedPacks;
+        public event Action<IEnumerable<Pet>> PurchasedPets;
+        public event Action<uint> SetLastBonusWinTime;
+        public event Action<IEnumerable<Achievement>> EarnedAchievements52;
+        public event Action<IEnumerable<LobbyIcon>> PurchasedLobbyIcons;
+        public event Action<IEnumerable<DeathAnimation>> PurchasedDeathAnimations;
+        public event Action FacebookInviteFriends;
+        public event Action<IEnumerable<(Scroll scroll, uint amount)>> PurchasedScrolls;
+        public event Action<string> HostGivenToPlayer;
+        public event Action HostGivenToMe;
+        public event Action<string> KickedPlayer;
+        public event Action KickedMe;
+        public event Action<string> InvitePowersGivenToPlayer;
+        public event Action InvitePowersGivenToMe;
+        public event Action SteamFirstLogin;
+        public event Action<string, string> UpdateFriendUsername;
+        public event Action EnableShopButtons;
+        public event Action SteamPopup;
+        public event Action Register;
+        public event Action<string> AuthenticateWithSteamCloud;
+        public event Action<bool, uint> StartRankedQueue;
+        public event Action LeaveRankedQueue;
+        public event Action AcceptRankedPopup;
+        public event Action<uint, uint, uint, uint, uint> UserStatistics;
+        public event Action<uint> RankedTimeoutDuration;
+        public event Action<string> AuthenticateWithSteam;
+        public event Action<ModeratorMessage, string> ModeratorMessage;
+        public event Action<ReferralReward, uint?> ReferAFriendUpdate;
+        public event Action<IEnumerable<uint>> PlayerStatistics;
+        public event Action<Scroll> ScrollConsumed;
+        public event Action<AdViewResult, uint> AdViewResponse;
+        public event Action UserJoiningLobbyTooQuickly;
+        public event Action<Promotion, uint, double, uint> PromotionPopup;
+        public event Action KickstarterShare;
+        public event Action<IEnumerable<TutorialTip>> TutorialProgress;
+        public event Action<IEnumerable<(Taunt taunt, uint amount)>> PurchasedTaunts;
+        public event Action<IEnumerable<(Currency currency, uint multiplier)>> CurrencyMultiplier;
+        public event Action<byte, GameMode> PickNames;
+        public event Action<Player, string> NamesAndPositionsOfUsers;
+        public event Action<Role, Player, Option<Player>> RoleAndPosition;
+        public event Action StartNight;
+        public event Action StartDay;
+        public event Action<Player, Role, bool, IEnumerable<DeathCause>> WhoDiedAndHow;
+        public event Action StartDiscussion;
+        public event Action<byte> StartVoting;
+        public event Action<Player> StartDefenseTransition;
+        public event Action StartJudgement;
+        public event Action<byte, byte> TrialFoundGuilty;
+        public event Action<byte, byte> TrialFoundNotGuilty;
+        public event Action<Player> LookoutNightAbilityMessage;
+        public event Action<Player, Player, byte> UserVoted;
+        public event Action<Player, Player, byte> UserCanceledVote;
+        public event Action<Player, Player, Player, byte> UserChangedVote;
+        public event Action<bool> UserDied;
+        public event Action<Player, Role> Resurrection;
+        public event Action<IEnumerable<Role>> TellRoleList;
+        public event Action<LocalizationTable, Player, string> UserChosenName;
+        public event Action<IEnumerable<(Player player, Role role)>> OtherMafia;
+        public event Action<Role> TellTownAmnesiacChangedRole;
+        public event Action<Role, Option<Player>> AmnesiacChangedRole;
+        public event Action BroughtBackToLife;
+        public event Action StartFirstDay;
+        public event Action BeingJailed;
+        public event Action<Player, bool, bool> JailedTarget;
+        public event Action<Player> UserJudgementVoted;
+        public event Action<Player> UserChangedJudgementVote;
+        public event Action<Player> UserCanceledJudgementVote;
+        public event Action<Player, JudgementVote> TellJudgementVotes;
+        public event Action ExecutionerCompletedGoal;
+        public event Action JesterCompletedGoal;
+        public event Action<Player> MayorRevealed;
+        public event Action<Player> MayorRevealedAndAlreadyVoted;
+        public event Action<Player> DisguiserStoleYourIdentity;
+        public event Action<Player> DisguiserChangedIdentity;
+        public event Action<Player, Player> DisguiserChangedUpdateMafia;
+        public event Action MediumIsTalkingToUs;
+        public event Action MediumCommunicating;
+        public event Action<Player, string> TellLastWill;
+        public event Action<byte> HowManyAbilitiesLeft;
+        public event Action<Player, Role, Player, byte, byte?, byte?> MafiaTargeting;
+        public event Action<Role> TellJanitorTargetsRole;
+        public event Action<Player, string> TellJanitorTargetsWill;
+        public event Action<Faction, IEnumerable<Player>> SomeoneHasWon;
+        public event Action MafiosoPromotedToGodfather;
+        public event Action<Player> MafiosoPromotedToGodfatherUpdateMafia;
+        public event Action MafiaPromotedToMafioso;
+        public event Action<Player> TellMafiaAboutMafiosoPromotion;
+        public event Action ExecutionerConvertedToJester;
+        public event Action<Player, Role> AmnesiacBecameMafiaOrWitch;
+        public event Action<Player> UserDisconnected;
+        public event Action<Player> MafiaWasJailed;
+        public event Action<InvalidNameStatus> InvalidNameMessage;
+        public event Action StartNightTransition;
+        public event Action<IEnumerable<Player>> StartDayTransition;
+        public event Action LynchUser;
+        public event Action<Player, bool, string> DeathNote;
+        public event Action<IEnumerable<(Player player, House house)>> HousesChosen;
+        public event Action FirstDayTransition;
+        public event Action<IEnumerable<(Player player, Character character)>> CharactersChosen;
+        public event Action<Player> ResurrectionSetAlive;
+        public event Action StartDefense;
+        public event Action<Player> UserLeftDuringSelection;
+        public event Action VigilanteKilledTown;
+        public event Action<Player, Player> NotifyUsersOfPrivateMessage;
+        public event Action<PrivateMessageType, Player, string, Player?> PrivateMessage;
+        public event Action<IEnumerable<Achievement>> EarnedAchievements161;
+        public event Action<AuthenticationResult, uint?> AuthenticationFailed;
+        public event Action<bool, Player> SpyNightAbilityMessage;
+        public event Action OneDayBeforeStalemate;
+        public event Action<IEnumerable<(Player player, Pet pet)>> PetsChosen;
+        public event Action<Achievement> FacebookShareAchievement;
+        public event Action<Faction> FacebookShareWin;
+        public event Action<IEnumerable<(Player player, DeathAnimation deathAnimation)>> DeathAnimationsChosen;
+        public event Action FullMoonNight;
+        public event Action<string> Identify;
+        public event Action<uint, GameMode, Faction, bool, byte, byte, IEnumerable<(string name, string username, Player player, IEnumerable<Role> roles)>> EndGameInfo;
+        public event Action<Player, string> EndGameChatMessage;
+        public event Action<IEnumerable<(Player, bool)>> EndGameUserUpdate;
+        public event Action<IEnumerable<(Role role, uint totalSlots, uint yourSlots)>> RoleLotsInfoMessage;
+        public event Action<Uri> ExternalPurchase;
+        public event Action VampirePromotion;
+        public event Action<IEnumerable<(Player player, bool youngest)>> OtherVampires;
+        public event Action<Player, bool> AddVampire;
+        public event Action<bool> CanVampiresConvert;
+        public event Action<Player, Option<Player>> VampireDied;
+        public event Action VampireHunterPromoted;
+        public event Action<Player> VampireVisitedMessage;
+        public event Action<bool> CheckUsernameResult;
+        public event Action<NameChangeResult> NameChangeResult;
+        public event Action<AccountState> AccountState;
+        public event Action<IEnumerable<AccountItem>> PurchasedAccountItems;
+        public event Action<AccountItem, uint, uint> AccountItemConsumed;
+        public event Action<Player, Player> TransporterNotification;
+        public event Action<ShopItem, uint, PurchaseSource, uint, PurchaseResult, ItemType, IEnumerable<(ItemType type, uint id)>> ProductPurchaseResult;
+        public event Action<uint> UpdateFreeCurrency;
+        public event Action<IEnumerable<(uint type, string uiFilter, uint startingSeconds, uint endingSeconds)>> ActiveEvents;
+        public event Action<CauldronRewardType, uint, uint, bool, uint, IEnumerable<CauldronPotion>, IEnumerable<(ItemType type, uint id, uint amount)>> CauldronStatus;
+        public event Action<Player, TauntTargetType, Taunt, bool> TauntResult;
+        public event Action<Player, TauntTargetType, Taunt> TauntActivated;
+        public event Action<Taunt> TauntConsumed;
+        public event Action<Player> TrackerNightAbility;
+        public event Action<Player> AmbusherNightAbility;
+        public event Action<Player> GuardianAngelProtection;
+        public event Action PirateDuel;
+        public event Action<Player> DuelTarget;
+        public event Action<byte, byte, byte> PotionMasterPotions;
+        public event Action<byte?> HasNecronomicon;
+        public event Action<IEnumerable<(Player player, Role role)>> OtherWitches;
+        public event Action<Player, Player, Player?> PsychicNightAbility;
+        public event Action<Role> TrapperNightAbility;
+        public event Action<TrapStatus> TrapperTrapStatus;
+        public event Action PestilenceConversion;
+        public event Action<byte> JuggernautKillCount;
+        public event Action<Player, Player?> CovenGotNecronomicon;
+        public event Action GuardianAngelPromoted;
+        public event Action<Player> VIPTarget;
+        public event Action<DuelAttack, DuelDefense> PirateDuelOutcome;
+        public event Action<Brand, GameMode, SetConfigResult> HostSetPartyConfigResult;
+        public event Action<IEnumerable<GameMode>> ActiveGameModes;
+        public event Action<AccountFlags> AccountFlags;
+        public event Action<Player> ZombieRotted;
+        public event Action<Player> LoverTarget;
+        public event Action<Player> PlagueSpread;
+        public event Action<Player> RivalTarget;
+        public event Action<GameMode, uint, uint, uint, uint, uint, uint, uint, bool, uint, uint, uint, uint, uint, uint, uint> RankedInfo;
+        public event Action<Player, bool, ExecuteReason> JailorDeathNote;
+        public event Action<DisconnectReason> Disconnected;
+        public event Action<IEnumerable<LocalizationTable>> SpyNightInfo;
+        public event Action<IEnumerable<bool>> ServerFlags;
+
+        public ServerMessageParser(MessageParser parser) => parser.MessageRead += Parse;
+
+        protected void Parse(byte[] buffer, int index, int length)
+        {
+            switch ((ServerMessageType)buffer[index++])
+            {
+                case ServerMessageType.AUTHENTICATED:
+                    if (Authenticated == null) break;
+                    ServerMessageParsers.AUTHENTICATED.Build(buffer, index, length).Parse(out bool registered).CheckPadding();
+                    Authenticated(registered);
+                    break;
+                case ServerMessageType.CREATE_LOBBY:
+                    if (CreateLobby == null) break;
+                    ServerMessageParsers.CREATE_LOBBY.Build(buffer, index, length).Parse(out bool host).Parse(out GameMode gameMode).CheckPadding();
+                    CreateLobby(host, gameMode);
+                    break;
+                case ServerMessageType.SET_HOST:
+                    if (SetHost == null) break;
+                    ServerMessageParsers.SET_HOST.Build(buffer, index, length).CheckPadding();
+                    SetHost();
+                    break;
+                case ServerMessageType.USER_JOINED_GAME:
+                    if (UserJoinedGame == null) break;
+                    ServerMessageParsers.USER_JOINED_GAME.Build(buffer, index, length).Parse(out host).Parse(out bool display).Parse(out string username).Parse(out Player player).Parse(out LobbyIcon lobbyIcon).CheckPadding();
+                    UserJoinedGame(host, display, username, player, lobbyIcon);
+                    break;
+                case ServerMessageType.USER_LEFT_GAME:
+                    if (UserLeftGame == null) break;
+                    ServerMessageParsers.USER_LEFT_GAME.Build(buffer, index, length).Parse(out bool update).Parse(out display).Parse(out player).CheckPadding();
+                    UserLeftGame(update, display, player);
+                    break;
+                case ServerMessageType.CHAT_BOX_MESSAGE:
+                    if (ChatBoxMessage == null) break;
+                    ServerMessageParsers.CHAT_BOX_MESSAGE.Build(buffer, index, length).Parse(out bool inGame).Parse(out player).Parse(out string message).CheckPadding();
+                    ChatBoxMessage(inGame, player, message);
+                    break;
+                case ServerMessageType.HOST_CLICKED_ON_CATALOG:
+                    if (HostClickedOnCatalog == null) break;
+                    ServerMessageParsers.HOST_CLICKED_ON_CATALOG.Build(buffer, index, length).Parse(out Catalog catalog).CheckPadding();
+                    HostClickedOnCatalog(catalog);
+                    break;
+                case ServerMessageType.HOST_CLICKED_ON_POSSIBLE_ROLES:
+                    if (HostClickedOnPossibleRoles == null) break;
+                    ServerMessageParsers.HOST_CLICKED_ON_POSSIBLE_ROLES.Build(buffer, index, length).Parse(out byte selectedIndex).Parse(out byte scrollPosition).CheckPadding();
+                    HostClickedOnPossibleRoles(selectedIndex, scrollPosition);
+                    break;
+                case ServerMessageType.HOST_CLICKED_ON_ADD_BUTTON:
+                    if (HostClickedOnAddButton == null) break;
+                    ServerMessageParsers.HOST_CLICKED_ON_ADD_BUTTON.Build(buffer, index, length).Parse(out Role role).CheckPadding();
+                    HostClickedOnAddButton(role);
+                    break;
+                case ServerMessageType.HOST_CLICKED_ON_REMOVE_BUTTON:
+                    if (HostClickedOnRemoveButton == null) break;
+                    ServerMessageParsers.HOST_CLICKED_ON_REMOVE_BUTTON.Build(buffer, index, length).Parse(out byte slotIndex).CheckPadding();
+                    HostClickedOnRemoveButton(slotIndex);
+                    break;
+                case ServerMessageType.HOST_CLICKED_ON_START_BUTTON:
+                    if (HostClickedOnStartButton == null) break;
+                    ServerMessageParsers.HOST_CLICKED_ON_START_BUTTON.Build(buffer, index, length).CheckPadding();
+                    HostClickedOnStartButton();
+                    break;
+                case ServerMessageType.CANCEL_START_COOLDOWN:
+                    if (CancelStartCooldown == null) break;
+                    ServerMessageParsers.CANCEL_START_COOLDOWN.Build(buffer, index, length).CheckPadding();
+                    CancelStartCooldown();
+                    break;
+                case ServerMessageType.ASSIGN_NEW_HOST:
+                    if (AssignNewHost == null) break;
+                    ServerMessageParsers.ASSIGN_NEW_HOST.Build(buffer, index, length).Parse(out player);
+                    AssignNewHost(player);
+                    break;
+                case ServerMessageType.VOTED_TO_REPICK_HOST:
+                    if (VotedToRepickHost == null) break;
+                    ServerMessageParsers.VOTED_TO_REPICK_HOST.Build(buffer, index, length).Parse(out byte votesUntilRepick);
+                    VotedToRepickHost(votesUntilRepick);
+                    break;
+                case ServerMessageType.NO_LONGER_HOST:
+                    if (NoLongerHost == null) break;
+                    ServerMessageParsers.NO_LONGER_HOST.Build(buffer, index, length).CheckPadding();
+                    NoLongerHost();
+                    break;
+                case ServerMessageType.DO_NOT_SPAM:
+                    if (DoNotSpam == null) break;
+                    ServerMessageParsers.DO_NOT_SPAM.Build(buffer, index, length).CheckPadding();
+                    DoNotSpam();
+                    break;
+                case ServerMessageType.HOW_MANY_PLAYERS_AND_GAMES:
+                    if (HowManyPlayersAndGames == null) break;
+                    ServerMessageParsers.HOW_MANY_PLAYERS_AND_GAMES.Build(buffer, index, length).Parse(out uint playerCount).Parse(out uint gameCount).CheckPadding();
+                    HowManyPlayersAndGames(playerCount, gameCount);
+                    break;
+                case ServerMessageType.SYSTEM_MESSAGE:
+                    if (SystemMessage == null) break;
+                    ServerMessageParsers.SYSTEM_MESSAGE.Build(buffer, index, length).Parse(out message).CheckPadding();
+                    SystemMessage(message);
+                    break;
+                case ServerMessageType.STRING_TABLE_MESSAGE:
+                    if (StringTableMessage == null) break;
+                    ServerMessageParsers.STRING_TABLE_MESSAGE.Build(buffer, index, length).Parse(out LocalizationTable tableMessage);
+                    StringTableMessage(tableMessage);
+                    break;
+                case ServerMessageType.FRIEND_LIST:
+                    if (FriendList == null) break;
+                    ServerMessageParsers.FRIEND_LIST.Build(buffer, index, length).Parse(parser => parser.Parse((username2, rest) => (username2, rest.userID2, rest.status2, rest.ownsCoven2), p => p.Parse((userID2, rest) => (userID2, rest.status2, rest.ownsCoven2), p2 => p2.Parse((status2, ownsCoven2) => (status2, ownsCoven2), p3 => p3.Parse(p4 => p4.CheckPadding())))), out IEnumerable<(string username, uint userID, OnlineStatus status, bool ownsCoven)> friendList).CheckPadding();
+                    FriendList(friendList);
+                    break;
+                case ServerMessageType.FRIEND_REQUEST_NOTIFICATIONS:
+                    if (FriendRequestNotifications == null) break;
+                    ServerMessageParsers.FRIEND_REQUEST_NOTIFICATIONS.Build(buffer, index, length).Parse(parser => parser.Parse((username2, userID2) => (username2, userID2), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(string username, uint userID)> friendRequests).CheckPadding();
+                    FriendRequestNotifications(friendRequests);
+                    break;
+                case ServerMessageType.ADD_FRIEND_REQUEST_RESPONSE:
+                    if (AddFriendRequestResponse == null) break;
+                    ServerMessageParsers.ADD_FRIEND_REQUEST_RESPONSE.Build(buffer, index, length).Parse(out bool success).CheckPadding();
+                    AddFriendRequestResponse(success);
+                    break;
+                case ServerMessageType.CONFIRM_FRIEND_REQUEST:
+                    if (ConfirmFriendRequest == null) break;
+                    ServerMessageParsers.CONFIRM_FRIEND_REQUEST.Build(buffer, index, length).Parse(out uint userID).Parse(out OnlineStatus onlineStatus).Parse(out bool ownsCoven).CheckPadding();
+                    ConfirmFriendRequest(userID, onlineStatus, ownsCoven);
+                    break;
+                case ServerMessageType.SUCCESSFULLY_REMOVED_FRIEND:
+                    if (SuccessfullyRemovedFriend == null) break;
+                    ServerMessageParsers.SUCCESSFULLY_REMOVED_FRIEND.Build(buffer, index, length).Parse(out userID).CheckPadding();
+                    SuccessfullyRemovedFriend(userID);
+                    break;
+                case ServerMessageType.SUCCESSFULLY_DECLINED_FRIEND_REQUEST:
+                    if (SuccessfullyDeclinedFriendRequest == null) break;
+                    ServerMessageParsers.SUCCESSFULLY_DECLINED_FRIEND_REQUEST.Build(buffer, index, length).CheckPadding();
+                    SuccessfullyDeclinedFriendRequest();
+                    break;
+                case ServerMessageType.FRIEND_UPDATE:
+                    if (FriendUpdate == null) break;
+                    ServerMessageParsers.FRIEND_UPDATE.Build(buffer, index, length).Parse(out userID).Parse(out onlineStatus).Parse(out ownsCoven).CheckPadding();
+                    FriendUpdate(userID, onlineStatus, ownsCoven);
+                    break;
+                case ServerMessageType.FRIEND_MESSAGE:
+                    if (FriendMessage == null) break;
+                    ServerMessageParsers.FRIEND_MESSAGE.Build(buffer, index, length).Parse(out userID).Parse(out bool sent).Parse(out message).CheckPadding();
+                    FriendMessage(userID, sent, message);
+                    break;
+                case ServerMessageType.USER_INFORMATION:
+                    if (UserInformation == null) break;
+                    ServerMessageParsers.USER_INFORMATION.Build(buffer, index, length).Parse(out username).Parse(out uint townPoints).Parse(out uint meritPoints).CheckPadding();
+                    UserInformation(username, townPoints, meritPoints);
+                    break;
+                case ServerMessageType.CREATE_PARTY_LOBBY:
+                    if (CreatePartyLobby == null) break;
+                    ServerMessageParsers.CREATE_PARTY_LOBBY.Build(buffer, index, length).Parse(out Brand brand).CheckPadding();
+                    CreatePartyLobby(brand);
+                    break;
+                case ServerMessageType.PARTY_INVITE_FAILED:
+                    if (PartyInviteFailed == null) break;
+                    ServerMessageParsers.PARTY_INVITE_FAILED.Build(buffer, index, length).Parse(out username).Parse(out FailedInvitationStatus failedInvitationStatus).CheckPadding();
+                    PartyInviteFailed(username, failedInvitationStatus);
+                    break;
+                case ServerMessageType.PARTY_INVITE_NOTIFICATION:
+                    if (PartyInviteNotification == null) break;
+                    ServerMessageParsers.PARTY_INVITE_NOTIFICATION.Build(buffer, index, length).Parse(out userID).Parse(out username).CheckPadding();
+                    PartyInviteNotification(userID, username);
+                    break;
+                case ServerMessageType.ACCEPTED_PARTY_INVITE:
+                    if (AcceptedPartyInvite == null) break;
+                    ServerMessageParsers.ACCEPTED_PARTY_INVITE.Build(buffer, index, length).Parse(out AcceptInvitationResult acceptInvitationResult).CheckPadding();
+                    AcceptedPartyInvite(acceptInvitationResult);
+                    break;
+                case ServerMessageType.PENDING_PARTY_INVITE_STATUS:
+                    if (PendingPartyInviteStatus == null) break;
+                    ServerMessageParsers.PENDING_PARTY_INVITE_STATUS.Build(buffer, index, length).Parse(out username).Parse(out PendingInvitationStatus pendingInvitationStatus).CheckPadding();
+                    PendingPartyInviteStatus(username, pendingInvitationStatus);
+                    break;
+                case ServerMessageType.SUCCESSFULLY_LEFT_PARTY:
+                    if (SuccessfullyLeftParty == null) break;
+                    ServerMessageParsers.SUCCESSFULLY_LEFT_PARTY.Build(buffer, index, length).CheckPadding();
+                    SuccessfullyLeftParty();
+                    break;
+                case ServerMessageType.PARTY_CHAT:
+                    if (PartyChat == null) break;
+                    ServerMessageParsers.PARTY_CHAT.Build(buffer, index, length).Parse(out username).Parse(out message).CheckPadding();
+                    PartyChat(username, message);
+                    break;
+                case ServerMessageType.PARTY_MEMBER_LEFT:
+                    if (PartyMemberLeft == null) break;
+                    ServerMessageParsers.PARTY_MEMBER_LEFT.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    PartyMemberLeft(username);
+                    break;
+                case ServerMessageType.SETTINGS_INFORMATION:
+                    if (SettingsInformation == null) break;
+                    ServerMessageParsers.SETTINGS_INFORMATION.Build(buffer, index, length).Parse(out bool filterChat).Parse(out bool muteMusic).Parse(out bool muteEffects).Parse(out bool shareSkin).Parse(out bool classicSkinsOnly).Parse(out bool displayPets).Parse(out byte effectsVolume).Parse(out byte musicVolume).Parse(out Language language).Parse(out byte unknown).Parse(out TipBehaviour tipBehaviour).CheckPadding();
+                    SettingsInformation(filterChat, muteMusic, muteEffects, shareSkin, classicSkinsOnly, displayPets, effectsVolume, musicVolume, language, unknown, tipBehaviour);
+                    break;
+                case ServerMessageType.ADD_FRIEND:
+                    if (AddFriend == null) break;
+                    ServerMessageParsers.ADD_FRIEND.Build(buffer, index, length).Parse(out username).Parse(out userID).Parse(out onlineStatus).Parse(out ownsCoven).CheckPadding();
+                    AddFriend(username, userID, onlineStatus, ownsCoven);
+                    break;
+                case ServerMessageType.FORCED_LOGOUT:
+                    if (ForcedLogout == null) break;
+                    ServerMessageParsers.FORCED_LOGOUT.Build(buffer, index, length).CheckPadding();
+                    ForcedLogout();
+                    break;
+                case ServerMessageType.RETURN_TO_HOME_PAGE:
+                    if (ReturnToHomePage == null) break;
+                    ServerMessageParsers.RETURN_TO_HOME_PAGE.Build(buffer, index, length).CheckPadding();
+                    ReturnToHomePage();
+                    break;
+                case ServerMessageType.SHOP_PURCHASE_SUCCESS:
+                    if (ShopPurchaseSuccess == null) break;
+                    ServerMessageParsers.SHOP_PURCHASE_SUCCESS.Build(buffer, index, length).CheckPadding();
+                    ShopPurchaseSuccess();
+                    break;
+                case ServerMessageType.PURCHASED_CHARACTERS:
+                    if (PurchasedCharacters == null) break;
+                    ServerMessageParsers.PURCHASED_CHARACTERS.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<Character> characters).CheckPadding();
+                    PurchasedCharacters(characters);
+                    break;
+                case ServerMessageType.PURCHASED_HOUSES:
+                    if (PurchasedHouses == null) break;
+                    ServerMessageParsers.PURCHASED_HOUSES.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<House> houses).CheckPadding();
+                    PurchasedHouses(houses);
+                    break;
+                case ServerMessageType.PURCHASED_BACKGROUNDS:
+                    if (PurchasedBackgrounds == null) break;
+                    ServerMessageParsers.PURCHASED_BACKGROUNDS.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<Background> backgrounds).CheckPadding();
+                    PurchasedBackgrounds(backgrounds);
+                    break;
+                case ServerMessageType.SELECTION_SETTINGS:
+                    if (SelectionSettings == null) break;
+                    ServerMessageParsers.SELECTION_SETTINGS.Build(buffer, index, length).Parse(out Character character).Parse(out House house).Parse(out Background background).Parse(out Pet? pet).Parse(out lobbyIcon).Parse(out DeathAnimation deathAnimation).Parse(out Scroll? scroll1).Parse(out Scroll? scroll2).Parse(out Scroll? scroll3).Parse(out string name).CheckPadding();
+                    SelectionSettings(character, house, background, pet, lobbyIcon, deathAnimation, scroll1, scroll2, scroll3, name);
+                    break;
+                case ServerMessageType.REDEEM_CODE_MESSAGE:
+                    if (RedeemCodeMessage == null) break;
+                    RedeemCodeReward redeemCodeReward = default;
+                    string rewardArgs = null;
+                    ServerMessageParsers.REDEEM_CODE_MESSAGE.Build(buffer, index, length).Parse(out RedeemCodeResult redeemCodeResult).Parse(redeemCodeResult == RedeemCodeResult.SUCCESS, parser => parser.Parse(out redeemCodeReward).Parse(out rewardArgs), parser => parser).CheckPadding();
+                    RedeemCodeMessage(redeemCodeResult, redeemCodeResult == RedeemCodeResult.SUCCESS ? (RedeemCodeReward?)redeemCodeReward : null, rewardArgs);
+                    break;
+                case ServerMessageType.UPDATE_PAID_CURRENCY:
+                    if (UpdatePaidCurrency == null) break;
+                    ServerMessageParsers.UPDATE_PAID_CURRENCY.Build(buffer, index, length).Parse(out townPoints).CheckPadding();
+                    UpdatePaidCurrency(townPoints);
+                    break;
+                case ServerMessageType.PURCHASED_PACKS:
+                    if (PurchasedPacks == null) break;
+                    ServerMessageParsers.PURCHASED_PACKS.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<Pack> packs).CheckPadding();
+                    PurchasedPacks(packs);
+                    break;
+                case ServerMessageType.PURCHASED_PETS:
+                    if (PurchasedPets == null) break;
+                    ServerMessageParsers.PURCHASED_PETS.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<Pet> pets).CheckPadding();
+                    PurchasedPets(pets);
+                    break;
+                case ServerMessageType.SET_LAST_BONUS_WIN_TIME:
+                    if (SetLastBonusWinTime == null) break;
+                    ServerMessageParsers.SET_LAST_BONUS_WIN_TIME.Build(buffer, index, length).Parse(out uint lastBonusWinTime).CheckPadding();
+                    SetLastBonusWinTime(lastBonusWinTime);
+                    break;
+                case ServerMessageType.EARNED_ACHIEVEMENTS_52:
+                    if (EarnedAchievements52 == null) break;
+                    ServerMessageParsers.EARNED_ACHIEVEMENTS_52.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<Achievement> achievements).CheckPadding();
+                    EarnedAchievements52(achievements);
+                    break;
+                case ServerMessageType.PURCHASED_LOBBY_ICONS:
+                    if (PurchasedLobbyIcons == null) break;
+                    ServerMessageParsers.PURCHASED_LOBBY_ICONS.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<LobbyIcon> lobbyIcons).CheckPadding();
+                    PurchasedLobbyIcons(lobbyIcons);
+                    break;
+                case ServerMessageType.PURCHASED_DEATH_ANIMATIONS:
+                    if (PurchasedDeathAnimations == null) break;
+                    ServerMessageParsers.PURCHASED_DEATH_ANIMATIONS.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<DeathAnimation> deathAnimations).CheckPadding();
+                    PurchasedDeathAnimations(deathAnimations);
+                    break;
+                case ServerMessageType.FACEBOOK_INVITE_FRIENDS:
+                    if (FacebookInviteFriends == null) break;
+                    ServerMessageParsers.FACEBOOK_INVITE_FRIENDS.Build(buffer, index, length).CheckPadding();
+                    FacebookInviteFriends();
+                    break;
+                case ServerMessageType.PURCHASED_SCROLLS:
+                    if (PurchasedScrolls == null) break;
+                    ServerMessageParsers.PURCHASED_SCROLLS.Build(buffer, index, length).Parse(parser => parser.Parse((scroll4, amount) => (scroll4, amount), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(Scroll scroll, uint amount)> scrolls).CheckPadding();
+                    PurchasedScrolls(scrolls);
+                    break;
+                case ServerMessageType.HOST_GIVEN_TO_PLAYER:
+                    if (HostGivenToPlayer == null) break;
+                    ServerMessageParsers.HOST_GIVEN_TO_PLAYER.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    HostGivenToPlayer(username);
+                    break;
+                case ServerMessageType.HOST_GIVEN_TO_ME:
+                    if (HostGivenToMe == null) break;
+                    ServerMessageParsers.HOST_GIVEN_TO_ME.Build(buffer, index, length).CheckPadding();
+                    HostGivenToMe();
+                    break;
+                case ServerMessageType.KICKED_PLAYER:
+                    if (KickedPlayer == null) break;
+                    ServerMessageParsers.KICKED_PLAYER.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    KickedPlayer(username);
+                    break;
+                case ServerMessageType.KICKED_ME:
+                    if (KickedMe == null) break;
+                    ServerMessageParsers.KICKED_ME.Build(buffer, index, length).CheckPadding();
+                    KickedMe();
+                    break;
+                case ServerMessageType.INVITE_POWERS_GIVEN_TO_PLAYER:
+                    if (InvitePowersGivenToPlayer == null) break;
+                    ServerMessageParsers.INVITE_POWERS_GIVEN_TO_PLAYER.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    InvitePowersGivenToPlayer(username);
+                    break;
+                case ServerMessageType.INVITE_POWERS_GIVEN_TO_ME:
+                    if (InvitePowersGivenToMe == null) break;
+                    ServerMessageParsers.INVITE_POWERS_GIVEN_TO_ME.Build(buffer, index, length).CheckPadding();
+                    InvitePowersGivenToMe();
+                    break;
+                case ServerMessageType.STEAM_FIRST_LOGIN:
+                    if (SteamFirstLogin == null) break;
+                    ServerMessageParsers.STEAM_FIRST_LOGIN.Build(buffer, index, length).CheckPadding();
+                    SteamFirstLogin();
+                    break;
+                case ServerMessageType.UPDATE_FRIEND_USERNAME:
+                    if (UpdateFriendUsername == null) break;
+                    ServerMessageParsers.UPDATE_FRIEND_USERNAME.Build(buffer, index, length).Parse(out username).Parse(out string newUsername).CheckPadding();
+                    UpdateFriendUsername(username, newUsername);
+                    break;
+                case ServerMessageType.ENABLE_SHOP_BUTTONS:
+                    if (EnableShopButtons == null) break;
+                    ServerMessageParsers.ENABLE_SHOP_BUTTONS.Build(buffer, index, length).CheckPadding();
+                    EnableShopButtons();
+                    break;
+                case ServerMessageType.REGISTER:
+                    if (Register == null) break;
+                    ServerMessageParsers.REGISTER.Build(buffer, index, length).CheckPadding();
+                    Register();
+                    break;
+                case ServerMessageType.AUTHENTICATE_WITH_STEAM_CLOUD:
+                    if (AuthenticateWithSteamCloud == null) break;
+                    ServerMessageParsers.AUTHENTICATE_WITH_STEAM_CLOUD.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    AuthenticateWithSteamCloud(username);
+                    break;
+                case ServerMessageType.START_RANKED_QUEUE:
+                    if (StartRankedQueue == null) break;
+                    ServerMessageParsers.START_RANKED_QUEUE.Build(buffer, index, length).Parse(out bool requeue).Parse(out uint queueTimer).CheckPadding();
+                    StartRankedQueue(requeue, queueTimer);
+                    break;
+                case ServerMessageType.LEAVE_RANKED_QUEUE:
+                    if (LeaveRankedQueue == null) break;
+                    ServerMessageParsers.LEAVE_RANKED_QUEUE.Build(buffer, index, length).CheckPadding();
+                    LeaveRankedQueue();
+                    break;
+                case ServerMessageType.ACCEPT_RANKED_POPUP:
+                    if (AcceptRankedPopup == null) break;
+                    ServerMessageParsers.ACCEPT_RANKED_POPUP.Build(buffer, index, length).CheckPadding();
+                    AcceptRankedPopup();
+                    break;
+                case ServerMessageType.USER_STATISTICS:
+                    if (UserStatistics == null) break;
+                    ServerMessageParsers.USER_STATISTICS.Build(buffer, index, length).Parse(out uint gamesPlayed).Parse(out uint gamesWon).Parse(out uint gamesDrawn).Parse(out uint gamesDisconnected).Parse(out uint friendsReferred).CheckPadding();
+                    UserStatistics(gamesPlayed, gamesWon, gamesDrawn, gamesDisconnected, friendsReferred);
+                    break;
+                case ServerMessageType.RANKED_TIMEOUT_DURATION:
+                    if (RankedTimeoutDuration == null) break;
+                    ServerMessageParsers.RANKED_TIMEOUT_DURATION.Build(buffer, index, length).Parse(out uint timeoutDuration).CheckPadding();
+                    RankedTimeoutDuration(timeoutDuration);
+                    break;
+                case ServerMessageType.AUTHENTICATE_WITH_STEAM:
+                    if (AuthenticateWithSteam == null) break;
+                    ServerMessageParsers.AUTHENTICATE_WITH_STEAM.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    AuthenticateWithSteam(username);
+                    break;
+                case ServerMessageType.MODERATOR_MESSAGE:
+                    if (ModeratorMessage == null) break;
+                    ServerMessageParsers.MODERATOR_MESSAGE.Build(buffer, index, length).Parse(out ModeratorMessage modMessage).Parse(out string args).CheckPadding();
+                    ModeratorMessage(modMessage, args);
+                    break;
+                case ServerMessageType.REFER_A_FRIEND_UPDATE:
+                    if (ReferAFriendUpdate == null) break;
+                    townPoints = 0u;
+                    ServerMessageParsers.REFER_A_FRIEND_UPDATE.Build(buffer, index, length).Parse(out ReferralReward reward).Parse(reward < (ReferralReward)4, parser => parser.Parse(out townPoints), parser => parser).CheckPadding();
+                    ReferAFriendUpdate(reward, reward < (ReferralReward)4 ? null : (uint?)townPoints);
+                    break;
+                case ServerMessageType.PLAYER_STATISTICS:
+                    if (PlayerStatistics == null) break;
+                    ServerMessageParsers.PLAYER_STATISTICS.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<uint> statistics).CheckPadding();
+                    PlayerStatistics(statistics);
+                    break;
+                case ServerMessageType.SCROLL_CONSUMED:
+                    if (ScrollConsumed == null) break;
+                    ServerMessageParsers.SCROLL_CONSUMED.Build(buffer, index, length).Parse(out Scroll scroll).CheckPadding();
+                    ScrollConsumed(scroll);
+                    break;
+                case ServerMessageType.AD_VIEW_RESPONSE:
+                    if (AdViewResponse == null) break;
+                    uint value = 0u;
+                    byte byteValue = 0;
+                    ServerMessageParsers.AD_VIEW_RESPONSE.Build(buffer, index, length).Parse(out AdViewResult adViewResult).Parse(adViewResult == AdViewResult.GIVE_PRIZE || adViewResult == AdViewResult.SET_TOKEN, parser => parser.Parse(adViewResult == AdViewResult.GIVE_PRIZE, p => p.Parse(out byteValue), p => p.Parse(out value)), parser => parser).CheckPadding();
+                    AdViewResponse(adViewResult, adViewResult == AdViewResult.GIVE_PRIZE ? byteValue : value);
+                    break;
+                case ServerMessageType.USER_JOINING_LOBBY_TOO_QUICKLY_MESSAGE:
+                    if (UserJoiningLobbyTooQuickly == null) break;
+                    ServerMessageParsers.USER_JOINING_LOBBY_TOO_QUICKLY.Build(buffer, index, length).CheckPadding();
+                    UserJoiningLobbyTooQuickly();
+                    break;
+                case ServerMessageType.PROMOTION_POPUP:
+                    if (PromotionPopup == null) break;
+                    ServerMessageParsers.PROMOTION_POPUP.Build(buffer, index, length).Parse(out Promotion promotion).Parse(out uint secondsActive).Parse(out double discount).Parse(out uint refID).CheckPadding();
+                    PromotionPopup(promotion, secondsActive, discount, refID);
+                    break;
+                case ServerMessageType.KICKSTARTER_SHARE:
+                    if (KickstarterShare == null) break;
+                    ServerMessageParsers.KICKSTARTER_SHARE.Build(buffer, index, length).CheckPadding();
+                    KickstarterShare();
+                    break;
+                case ServerMessageType.TUTORIAL_PROGRESS:
+                    if (TutorialProgress == null) break;
+                    ServerMessageParsers.TUTORIAL_PROGRESS.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<TutorialTip> tutorialTips);
+                    TutorialProgress(tutorialTips);
+                    break;
+                case ServerMessageType.PURCHASED_TAUNTS:
+                    if (PurchasedTaunts == null) break;
+                    ServerMessageParsers.PURCHASED_TAUNTS.Build(buffer, index, length).Parse(parser => parser.Parse((taunt2, amount) => (taunt2, amount), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(Taunt taunt, uint amount)> taunts);
+                    PurchasedTaunts(taunts);
+                    break;
+                case ServerMessageType.CURRENCY_MULTIPLIER:
+                    if (CurrencyMultiplier == null) break;
+                    ServerMessageParsers.CURRENCY_MULTIPLIER.Build(buffer, index, length).Parse(parser => parser.Parse((currency, multiplier) => (currency, multiplier), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(Currency currency, uint multiplier)> currencyMultipliers);
+                    CurrencyMultiplier(currencyMultipliers);
+                    break;
+                case ServerMessageType.PICK_NAMES:
+                    if (PickNames == null) break;
+                    ServerMessageParsers.PICK_NAMES.Build(buffer, index, length).Parse(out byte playerCountByte).Parse(out gameMode).CheckPadding();
+                    PickNames(playerCountByte, gameMode);
+                    break;
+                case ServerMessageType.NAMES_AND_POSITIONS_OF_USERS:
+                    if (NamesAndPositionsOfUsers == null) break;
+                    ServerMessageParsers.NAMES_AND_POSITIONS_OF_USERS.Build(buffer, index, length).Parse(out player).Parse(out name).CheckPadding();
+                    NamesAndPositionsOfUsers(player, name);
+                    break;
+                case ServerMessageType.ROLE_AND_POSITION:
+                    if (RoleAndPosition == null) break;
+                    ServerMessageParsers.ROLE_AND_POSITION.Build(buffer, index, length).Parse(out role).Parse(out player).Parse(out Option<Player> optionalPlayer).CheckPadding();
+                    RoleAndPosition(role, player, optionalPlayer);
+                    break;
+                case ServerMessageType.START_NIGHT:
+                    if (StartNight == null) break;
+                    ServerMessageParsers.START_NIGHT.Build(buffer, index, length).CheckPadding();
+                    StartNight();
+                    break;
+                case ServerMessageType.START_DAY:
+                    if (StartDay == null) break;
+                    ServerMessageParsers.START_DAY.Build(buffer, index, length).CheckPadding();
+                    StartDay();
+                    break;
+                case ServerMessageType.WHO_DIED_AND_HOW:
+                    if (WhoDiedAndHow == null) break;
+                    ServerMessageParsers.WHO_DIED_AND_HOW.Build(buffer, index, length).Parse(out player).Parse(out role).Parse(out bool announce).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<DeathCause> deathCauses).CheckPadding();
+                    WhoDiedAndHow(player, role, announce, deathCauses);
+                    break;
+                case ServerMessageType.START_DISCUSSION:
+                    if (StartDiscussion == null) break;
+                    ServerMessageParsers.START_DISCUSSION.Build(buffer, index, length).CheckPadding();
+                    StartDiscussion();
+                    break;
+                case ServerMessageType.START_VOTING:
+                    if (StartVoting == null) break;
+                    ServerMessageParsers.START_VOTING.Build(buffer, index, length).Parse(out byte votesNeeded).CheckPadding();
+                    StartVoting(votesNeeded);
+                    break;
+                case ServerMessageType.START_DEFENSE_TRANSITION:
+                    if (StartDefenseTransition == null) break;
+                    ServerMessageParsers.START_DEFENSE_TRANSITION.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    StartDefenseTransition(player);
+                    break;
+                case ServerMessageType.START_JUDGEMENT:
+                    if (StartJudgement == null) break;
+                    ServerMessageParsers.START_JUDGEMENT.Build(buffer, index, length).CheckPadding();
+                    StartJudgement();
+                    break;
+                case ServerMessageType.TRIAL_FOUND_GUILTY:
+                    if (TrialFoundGuilty == null) break;
+                    ServerMessageParsers.TRIAL_FOUND_GUILTY.Build(buffer, index, length).Parse(out byte guiltyVotes).Parse(out byte innocentVotes).CheckPadding();
+                    TrialFoundGuilty(guiltyVotes, innocentVotes);
+                    break;
+                case ServerMessageType.TRIAL_FOUND_NOT_GUILTY:
+                    if (TrialFoundNotGuilty == null) break;
+                    ServerMessageParsers.TRIAL_FOUND_NOT_GUILTY.Build(buffer, index, length).Parse(out guiltyVotes).Parse(out innocentVotes).CheckPadding();
+                    TrialFoundNotGuilty(guiltyVotes, innocentVotes);
+                    break;
+                case ServerMessageType.LOOKOUT_NIGHT_ABILITY_MESSAGE:
+                    if (LookoutNightAbilityMessage == null) break;
+                    ServerMessageParsers.LOOKOUT_NIGHT_ABILITY_MESSAGE.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    LookoutNightAbilityMessage(player);
+                    break;
+                case ServerMessageType.USER_VOTED:
+                    if (UserVoted == null) break;
+                    ServerMessageParsers.USER_VOTED.Build(buffer, index, length).Parse(out player).Parse(out Player player3).Parse(out byte voteCount).CheckPadding();
+                    UserVoted(player, player3, voteCount);
+                    break;
+                case ServerMessageType.USER_CANCELED_VOTE:
+                    if (UserCanceledVote == null) break;
+                    ServerMessageParsers.USER_CANCELED_VOTE.Build(buffer, index, length).Parse(out player).Parse(out player3).Parse(out voteCount).CheckPadding();
+                    UserCanceledVote(player, player3, voteCount);
+                    break;
+                case ServerMessageType.USER_CHANGED_VOTE:
+                    if (UserChangedVote == null) break;
+                    ServerMessageParsers.USER_CHANGED_VOTE.Build(buffer, index, length).Parse(out player).Parse(out player3).Parse(out Player player4).Parse(out voteCount).CheckPadding();
+                    UserChangedVote(player, player3, player4, voteCount);
+                    break;
+                case ServerMessageType.USER_DIED:
+                    if (UserDied == null) break;
+                    ServerMessageParsers.USER_DIED.Build(buffer, index, length).Parse(out bool silent).CheckPadding();
+                    UserDied(silent);
+                    break;
+                case ServerMessageType.RESURRECTION:
+                    if (Resurrection == null) break;
+                    ServerMessageParsers.RESURRECTION.Build(buffer, index, length).Parse(out player).Parse(out role).CheckPadding();
+                    Resurrection(player, role);
+                    break;
+                case ServerMessageType.TELL_ROLE_LIST:
+                    if (TellRoleList == null) break;
+                    ServerMessageParsers.TELL_ROLE_LIST.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<Role> roles).CheckPadding();
+                    TellRoleList(roles);
+                    break;
+                case ServerMessageType.USER_CHOSEN_NAME:
+                    if (UserChosenName == null) break;
+                    ServerMessageParsers.USER_CHOSEN_NAME.Build(buffer, index, length).Parse(out tableMessage).Parse(out player).Parse(out name).CheckPadding();
+                    UserChosenName(tableMessage, player, name);
+                    break;
+                case ServerMessageType.OTHER_MAFIA:
+                    if (OtherMafia == null) break;
+                    ServerMessageParsers.OTHER_MAFIA.Build(buffer, index, length).Parse(parser => parser.Parse((player2, role2) => (player2, role2), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(Player player, Role role)> teammates).CheckPadding();
+                    OtherMafia(teammates);
+                    break;
+                case ServerMessageType.TELL_TOWN_AMNESIAC_CHANGED_ROLE:
+                    if (TellTownAmnesiacChangedRole == null) break;
+                    ServerMessageParsers.TELL_TOWN_AMNESIAC_CHANGED_ROLE.Build(buffer, index, length).Parse(out role).CheckPadding();
+                    TellTownAmnesiacChangedRole(role);
+                    break;
+                case ServerMessageType.AMNESIAC_CHANGED_ROLE:
+                    if (AmnesiacChangedRole == null) break;
+                    ServerMessageParsers.AMNESIAC_CHANGED_ROLE.Build(buffer, index, length).Parse(out role).Parse(out optionalPlayer).CheckPadding();
+                    AmnesiacChangedRole(role, optionalPlayer);
+                    break;
+                case ServerMessageType.BROUGHT_BACK_TO_LIFE:
+                    if (BroughtBackToLife == null) break;
+                    ServerMessageParsers.BROUGHT_BACK_TO_LIFE.Build(buffer, index, length).CheckPadding();
+                    BroughtBackToLife();
+                    break;
+                case ServerMessageType.START_FIRST_DAY:
+                    if (StartFirstDay == null) break;
+                    ServerMessageParsers.START_FIRST_DAY.Build(buffer, index, length).CheckPadding();
+                    StartFirstDay();
+                    break;
+                case ServerMessageType.BEING_JAILED:
+                    if (BeingJailed == null) break;
+                    ServerMessageParsers.BEING_JAILED.Build(buffer, index, length).CheckPadding();
+                    BeingJailed();
+                    break;
+                case ServerMessageType.JAILED_TARGET:
+                    if (JailedTarget == null) break;
+                    ServerMessageParsers.JAILED_TARGET.Build(buffer, index, length).Parse(out player).Parse(out bool canExecute).Parse(out bool executedTown).CheckPadding();
+                    JailedTarget(player, canExecute, executedTown);
+                    break;
+                case ServerMessageType.USER_JUDGEMENT_VOTED:
+                    if (UserJudgementVoted == null) break;
+                    ServerMessageParsers.USER_JUDGEMENT_VOTED.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    UserJudgementVoted(player);
+                    break;
+                case ServerMessageType.USER_CHANGED_JUDGEMENT_VOTE:
+                    if (UserChangedJudgementVote == null) break;
+                    ServerMessageParsers.USER_CHANGED_JUDGEMENT_VOTE.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    UserChangedJudgementVote(player);
+                    break;
+                case ServerMessageType.USER_CANCELED_JUDGEMENT_VOTE:
+                    if (UserCanceledJudgementVote == null) break;
+                    ServerMessageParsers.USER_CANCELED_JUDGEMENT_VOTE.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    UserCanceledJudgementVote(player);
+                    break;
+                case ServerMessageType.TELL_JUDGEMENT_VOTES:
+                    if (TellJudgementVotes == null) break;
+                    ServerMessageParsers.TELL_JUDGEMENT_VOTES.Build(buffer, index, length).Parse(out player).Parse(out JudgementVote judgementVote).CheckPadding();
+                    TellJudgementVotes(player, judgementVote);
+                    break;
+                case ServerMessageType.EXECUTIONER_COMPLETED_GOAL:
+                    if (ExecutionerCompletedGoal == null) break;
+                    ServerMessageParsers.EXECUTIONER_COMPLETED_GOAL.Build(buffer, index, length).CheckPadding();
+                    ExecutionerCompletedGoal();
+                    break;
+                case ServerMessageType.JESTER_COMPLETED_GOAL:
+                    if (JesterCompletedGoal == null) break;
+                    ServerMessageParsers.JESTER_COMPLETED_GOAL.Build(buffer, index, length).CheckPadding();
+                    JesterCompletedGoal();
+                    break;
+                case ServerMessageType.MAYOR_REVEALED:
+                    if (MayorRevealed == null) break;
+                    ServerMessageParsers.MAYOR_REVEALED.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    MayorRevealed(player);
+                    break;
+                case ServerMessageType.MAYOR_REVEALED_AND_ALREADY_VOTED:
+                    if (MayorRevealedAndAlreadyVoted == null) break;
+                    ServerMessageParsers.MAYOR_REVEALED_AND_ALREADY_VOTED.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    MayorRevealedAndAlreadyVoted(player);
+                    break;
+                case ServerMessageType.DISGUISER_STOLE_YOUR_IDENTITY:
+                    if (DisguiserStoleYourIdentity == null) break;
+                    ServerMessageParsers.DISGUISER_STOLE_YOUR_IDENTITY.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    DisguiserStoleYourIdentity(player);
+                    break;
+                case ServerMessageType.DISGUISER_CHANGED_IDENTITY:
+                    if (DisguiserChangedIdentity == null) break;
+                    ServerMessageParsers.DISGUISER_CHANGED_IDENTITY.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    DisguiserChangedIdentity(player);
+                    break;
+                case ServerMessageType.DISGUISER_CHANGED_UPDATE_MAFIA:
+                    if (DisguiserChangedUpdateMafia == null) break;
+                    ServerMessageParsers.DISGUISER_CHANGED_UPDATE_MAFIA.Build(buffer, index, length).Parse(out player).Parse(out player3).CheckPadding();
+                    DisguiserChangedUpdateMafia(player, player3);
+                    break;
+                case ServerMessageType.MEDIUM_IS_TALKING_TO_US:
+                    if (MediumIsTalkingToUs == null) break;
+                    ServerMessageParsers.MEDIUM_IS_TALKING_TO_US.Build(buffer, index, length).CheckPadding();
+                    MediumIsTalkingToUs();
+                    break;
+                case ServerMessageType.MEDIUM_COMMUNICATING:
+                    if (MediumCommunicating == null) break;
+                    ServerMessageParsers.MEDIUM_COMMUNICATING.Build(buffer, index, length).CheckPadding();
+                    MediumCommunicating();
+                    break;
+                case ServerMessageType.TELL_LAST_WILL:
+                    if (TellLastWill == null) break;
+                    string lastWill = null;
+                    ServerMessageParsers.TELL_LAST_WILL.Build(buffer, index, length).Parse(out player).Parse(out bool hasLastWill).Parse(hasLastWill, parser => parser.Parse(out lastWill), parser => parser).CheckPadding();
+                    TellLastWill(player, lastWill);
+                    break;
+                case ServerMessageType.HOW_MANY_ABILITIES_LEFT:
+                    if (HowManyAbilitiesLeft == null) break;
+                    ServerMessageParsers.HOW_MANY_ABILITIES_LEFT.Build(buffer, index, length).Parse(out byte abilitiesLeft).CheckPadding();
+                    HowManyAbilitiesLeft(abilitiesLeft);
+                    break;
+                case ServerMessageType.MAFIA_TARGETING:
+                    if (MafiaTargeting == null) break;
+                    ServerMessageParsers.MAFIA_TARGETING.Build(buffer, index, length).Parse(out player).Parse(out role).Parse(out player3).Parse(out byte mod1).Parse(out Option<byte> mod2).Parse(out Option<byte> mod3).CheckPadding();
+                    MafiaTargeting(player, role, player3, mod1, mod2.ToNullable(), mod3.ToNullable());
+                    break;
+                case ServerMessageType.TELL_JANITOR_TARGETS_ROLE:
+                    if (TellJanitorTargetsRole == null) break;
+                    ServerMessageParsers.TELL_JANITOR_TARGETS_ROLE.Build(buffer, index, length).Parse(out role).CheckPadding();
+                    TellJanitorTargetsRole(role);
+                    break;
+                case ServerMessageType.TELL_JANITOR_TARGETS_WILL:
+                    if (TellJanitorTargetsWill == null) break;
+                    ServerMessageParsers.TELL_JANITOR_TARGETS_WILL.Build(buffer, index, length).Parse(out player).Parse(out lastWill).CheckPadding();
+                    TellJanitorTargetsWill(player, lastWill);
+                    break;
+                case ServerMessageType.SOMEONE_HAS_WON:
+                    if (SomeoneHasWon == null) break;
+                    ServerMessageParsers.SOMEONE_HAS_WON.Build(buffer, index, length).Parse(out Faction faction).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<Player> players).CheckPadding();
+                    SomeoneHasWon(faction, players);
+                    break;
+                case ServerMessageType.MAFIOSO_PROMOTED_TO_GODFATHER:
+                    if (MafiosoPromotedToGodfather == null) break;
+                    ServerMessageParsers.MAFIOSO_PROMOTED_TO_GODFATHER.Build(buffer, index, length).CheckPadding();
+                    MafiosoPromotedToGodfather();
+                    break;
+                case ServerMessageType.MAFIOSO_PROMOTED_TO_GODFATHER_UPDATE_MAFIA:
+                    if (MafiosoPromotedToGodfatherUpdateMafia == null) break;
+                    ServerMessageParsers.MAFIOSO_PROMOTED_TO_GODFATHER_UPDATE_MAFIA.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    MafiosoPromotedToGodfatherUpdateMafia(player);
+                    break;
+                case ServerMessageType.MAFIA_PROMOTED_TO_MAFIOSO:
+                    if (MafiaPromotedToMafioso == null) break;
+                    ServerMessageParsers.MAFIA_PROMOTED_TO_MAFIOSO.Build(buffer, index, length).CheckPadding();
+                    MafiaPromotedToMafioso();
+                    break;
+                case ServerMessageType.TELL_MAFIA_ABOUT_MAFIOSO_PROMOTION:
+                    if (TellMafiaAboutMafiosoPromotion == null) break;
+                    ServerMessageParsers.TELL_MAFIA_ABOUT_MAFIOSO_PROMOTION.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    TellMafiaAboutMafiosoPromotion(player);
+                    break;
+                case ServerMessageType.EXECUTIONER_CONVERTED_TO_JESTER:
+                    if (ExecutionerConvertedToJester == null) break;
+                    ServerMessageParsers.EXECUTIONER_CONVERTED_TO_JESTER.Build(buffer, index, length).CheckPadding();
+                    ExecutionerConvertedToJester();
+                    break;
+                case ServerMessageType.AMNESIAC_BECAME_MAFIA_OR_WITCH:
+                    if (AmnesiacBecameMafiaOrWitch == null) break;
+                    ServerMessageParsers.AMNESIAC_BECAME_MAFIA_OR_WITCH.Build(buffer, index, length).Parse(out player).Parse(out role).CheckPadding();
+                    AmnesiacBecameMafiaOrWitch(player, role);
+                    break;
+                case ServerMessageType.USER_DISCONNECTED:
+                    if (UserDisconnected == null) break;
+                    ServerMessageParsers.USER_DISCONNECTED.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    UserDisconnected(player);
+                    break;
+                case ServerMessageType.MAFIA_WAS_JAILED:
+                    if (MafiaWasJailed == null) break;
+                    ServerMessageParsers.MAFIA_WAS_JAILED.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    MafiaWasJailed(player);
+                    break;
+                case ServerMessageType.INVALID_NAME_MESSAGE:
+                    if (InvalidNameMessage == null) break;
+                    ServerMessageParsers.INVALID_NAME_MESSAGE.Build(buffer, index, length).Parse(out InvalidNameStatus invalidNameStatus).CheckPadding();
+                    InvalidNameMessage(invalidNameStatus);
+                    break;
+                case ServerMessageType.START_NIGHT_TRANSITION:
+                    if (StartNightTransition == null) break;
+                    ServerMessageParsers.START_NIGHT_TRANSITION.Build(buffer, index, length).CheckPadding();
+                    StartNightTransition();
+                    break;
+                case ServerMessageType.START_DAY_TRANSITION:
+                    if (StartDayTransition == null) break;
+                    ServerMessageParsers.START_DAY_TRANSITION.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out players).CheckPadding();
+                    StartDayTransition(players);
+                    break;
+                case ServerMessageType.LYNCH_USER:
+                    if (LynchUser == null) break;
+                    ServerMessageParsers.LYNCH_USER.Build(buffer, index, length).CheckPadding();
+                    LynchUser();
+                    break;
+                case ServerMessageType.DEATH_NOTE:
+                    if (DeathNote == null) break;
+                    ServerMessageParsers.DEATH_NOTE.Build(buffer, index, length).Parse(out player).Parse(out bool longTimer).Parse(out string deathNote).CheckPadding();
+                    DeathNote(player, longTimer, deathNote);
+                    break;
+                case ServerMessageType.HOUSES_CHOSEN:
+                    if (HousesChosen == null) break;
+                    ServerMessageParsers.HOUSES_CHOSEN.Build(buffer, index, length).Parse(parser => parser.Parse((player2, house2) => (player2, house2), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(Player player, House house)> chosenHouses).CheckPadding();
+                    HousesChosen(chosenHouses);
+                    break;
+                case ServerMessageType.FIRST_DAY_TRANSITION:
+                    if (FirstDayTransition == null) break;
+                    ServerMessageParsers.FIRST_DAY_TRANSITION.Build(buffer, index, length).CheckPadding();
+                    FirstDayTransition();
+                    break;
+                case ServerMessageType.CHARACTERS_CHOSEN:
+                    if (CharactersChosen == null) break;
+                    ServerMessageParsers.CHARACTERS_CHOSEN.Build(buffer, index, length).Parse(parser => parser.Parse((player2, character2) => (player2, character2), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(Player player, Character character)> chosenCharacters).CheckPadding();
+                    CharactersChosen(chosenCharacters);
+                    break;
+                case ServerMessageType.RESURRECTION_SET_ALIVE:
+                    if (ResurrectionSetAlive == null) break;
+                    ServerMessageParsers.RESURRECTION_SET_ALIVE.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    ResurrectionSetAlive(player);
+                    break;
+                case ServerMessageType.START_DEFENSE:
+                    if (StartDefense == null) break;
+                    ServerMessageParsers.START_DEFENSE.Build(buffer, index, length).CheckPadding();
+                    StartDefense();
+                    break;
+                case ServerMessageType.USER_LEFT_DURING_SELECTION:
+                    if (UserLeftDuringSelection == null) break;
+                    ServerMessageParsers.USER_LEFT_DURING_SELECTION.Build(buffer, index, length).Parse(out player);
+                    UserLeftDuringSelection(player);
+                    break;
+                case ServerMessageType.VIGILANTE_KILLED_TOWN:
+                    if (VigilanteKilledTown == null) break;
+                    ServerMessageParsers.VIGILANTE_KILLED_TOWN.Build(buffer, index, length).CheckPadding();
+                    VigilanteKilledTown();
+                    break;
+                case ServerMessageType.NOTIFY_USERS_OF_PRIVATE_MESSAGE:
+                    if (NotifyUsersOfPrivateMessage == null) break;
+                    ServerMessageParsers.NOTIFY_USERS_OF_PRIVATE_MESSAGE.Build(buffer, index, length).Parse(out player).Parse(out player3).CheckPadding();
+                    NotifyUsersOfPrivateMessage(player, player3);
+                    break;
+                case ServerMessageType.PRIVATE_MESSAGE:
+                    if (PrivateMessage == null) break;
+                    player3 = default;
+                    message = null;
+                    ServerMessageParsers.PRIVATE_MESSAGE.Build(buffer, index, length).Parse(out PrivateMessageType pmType).Parse(out player).Parse(pmType != PrivateMessageType.FROM_TO, parser => parser.Parse(out message), parser => parser.Parse(out player3).Parse(out message)).CheckPadding();
+                    PrivateMessage(pmType, player, message, pmType == PrivateMessageType.FROM_TO ? (Player?)player3 : null);
+                    break;
+                case ServerMessageType.EARNED_ACHIEVEMENTS_161:
+                    if (EarnedAchievements161 == null) break;
+                    ServerMessageParsers.EARNED_ACHIEVEMENTS_161.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out achievements).CheckPadding();
+                    EarnedAchievements161(achievements);
+                    break;
+                case ServerMessageType.AUTHENTICATION_FAILED:
+                    if (AuthenticationFailed == null) break;
+                    queueTimer = 0;
+                    ServerMessageParsers.AUTHENTICATION_FAILED.Build(buffer, index, length).Parse(out AuthenticationResult authResult).Parse(authResult == AuthenticationResult.ACCOUNT_SUSPENDED, parser => parser.Parse(out queueTimer), parser => parser).CheckPadding();
+                    AuthenticationFailed(authResult, authResult == AuthenticationResult.ACCOUNT_SUSPENDED ? (uint?)queueTimer : null);
+                    break;
+                case ServerMessageType.SPY_NIGHT_ABILITY_MESSAGE:
+                    if (SpyNightAbilityMessage == null) break;
+                    ServerMessageParsers.SPY_NIGHT_ABILITY_MESSAGE.Build(buffer, index, length).Parse(out bool isCoven).Parse(out player).CheckPadding();
+                    SpyNightAbilityMessage(isCoven, player);
+                    break;
+                case ServerMessageType.ONE_DAY_BEFORE_STALEMATE:
+                    if (OneDayBeforeStalemate == null) break;
+                    ServerMessageParsers.ONE_DAY_BEFORE_STALEMATE.Build(buffer, index, length).CheckPadding();
+                    OneDayBeforeStalemate();
+                    break;
+                case ServerMessageType.PETS_CHOSEN:
+                    if (PetsChosen == null) break;
+                    ServerMessageParsers.PETS_CHOSEN.Build(buffer, index, length).Parse(parser => parser.Parse((player2, pet2) => (player2, pet2), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(Player player, Pet pet)> chosenPets);
+                    PetsChosen(chosenPets);
+                    break;
+                case ServerMessageType.FACEBOOK_SHARE_ACHIEVEMENT:
+                    if (FacebookShareAchievement == null) break;
+                    ServerMessageParsers.FACEBOOK_SHARE_ACHIEVEMENT.Build(buffer, index, length).Parse(out Achievement achievement).CheckPadding();
+                    FacebookShareAchievement(achievement);
+                    break;
+                case ServerMessageType.FACEBOOK_SHARE_WIN:
+                    if (FacebookShareWin == null) break;
+                    ServerMessageParsers.FACEBOOK_SHARE_WIN.Build(buffer, index, length).Parse(out faction).CheckPadding();
+                    FacebookShareWin(faction);
+                    break;
+                case ServerMessageType.DEATH_ANIMATIONS_CHOSEN:
+                    if (DeathAnimationsChosen == null) break;
+                    ServerMessageParsers.DEATH_ANIMATIONS_CHOSEN.Build(buffer, index, length).Parse(parser => parser.Parse((player2, deathAnimation2) => (player2, deathAnimation2), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(Player player, DeathAnimation deathAnimation)> chosenDeathAnimations).CheckPadding();
+                    DeathAnimationsChosen(chosenDeathAnimations);
+                    break;
+                case ServerMessageType.FULL_MOON_NIGHT:
+                    if (FullMoonNight == null) break;
+                    ServerMessageParsers.FULL_MOON_NIGHT.Build(buffer, index, length).CheckPadding();
+                    FullMoonNight();
+                    break;
+                case ServerMessageType.IDENTIFY:
+                    if (Identify == null) break;
+                    ServerMessageParsers.IDENTIFY.Build(buffer, index, length).Parse(out message).CheckPadding();
+                    Identify(message);
+                    break;
+                case ServerMessageType.END_GAME_INFO:
+                    if (EndGameInfo == null) break;
+                    ServerMessageParsers.END_GAME_INFO.Build(buffer, index, length).Parse(out uint timeout).Parse(out gameMode).Parse(out faction).Parse(out bool won).Parse(out byte ratingChange).Parse(out byte mpGain).Parse(parser => parser.Parse((name2, rest) => (name2, rest.username2, rest.player2, rest.roles2), p => p.Parse((username2, rest) => (username2, rest.player2, rest.roles2), p2 => p2.Parse((player2, roles2) => (player2, roles2), p3 => p3.Parse(p4 => p4.Parse(p5 => p5.CheckPadding()), p4 => p4.Parse(out _).CheckPadding())))), out IEnumerable<(string name, string username, Player player, IEnumerable<Role> roles)> endGameInfo).CheckPadding();
+                    EndGameInfo(timeout, gameMode, faction, won, ratingChange, mpGain, endGameInfo);
+                    break;
+                case ServerMessageType.END_GAME_CHAT_MESSAGE:
+                    if (EndGameChatMessage == null) break;
+                    ServerMessageParsers.END_GAME_CHAT_MESSAGE.Build(buffer, index, length).Parse(out player).Parse(out message).CheckPadding();
+                    EndGameChatMessage(player, message);
+                    break;
+                case ServerMessageType.END_GAME_USER_UPDATE:
+                    if (EndGameUserUpdate == null) break;
+                    ServerMessageParsers.END_GAME_USER_UPDATE.Build(buffer, index, length).Parse(parser => parser.Parse((player2, left) => (player2, left), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(Player player, bool left)> userUpdates).CheckPadding();
+                    EndGameUserUpdate(userUpdates);
+                    break;
+                case ServerMessageType.ROLE_LOTS_INFO_MESSAGE:
+                    if (RoleLotsInfoMessage == null) break;
+                    ServerMessageParsers.ROLE_LOTS_INFO_MESSAGE.Build(buffer, index, length).Parse(parser => parser.Parse((role2, rest) => (role2, rest.totalSlots, rest.yourSlots), p => p.Parse((totalSlots, yourSlots) => (totalSlots, yourSlots), p2 => p2.Parse(p3 => p3.CheckPadding()))), out IEnumerable<(Role role, uint totalSlots, uint yourSlots)> roleLots).CheckPadding();
+                    RoleLotsInfoMessage(roleLots);
+                    break;
+                case ServerMessageType.EXTERNAL_PURCHASE:
+                    if (ExternalPurchase == null) break;
+                    ServerMessageParsers.EXTERNAL_PURCHASE.Build(buffer, index, length).Parse(out Uri uri).CheckPadding();
+                    ExternalPurchase(uri);
+                    break;
+                case ServerMessageType.VAMPIRE_PROMOTION:
+                    if (VampirePromotion == null) break;
+                    ServerMessageParsers.VAMPIRE_PROMOTION.Build(buffer, index, length).CheckPadding();
+                    VampirePromotion();
+                    break;
+                case ServerMessageType.OTHER_VAMPIRES:
+                    if (OtherVampires == null) break;
+                    ServerMessageParsers.OTHER_VAMPIRES.Build(buffer, index, length).Parse(parser => parser.Parse((player2, youngest2) => (player2, youngest2), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(Player player, bool youngest)> vampires).CheckPadding();
+                    OtherVampires(vampires);
+                    break;
+                case ServerMessageType.ADD_VAMPIRE:
+                    if (AddVampire == null) break;
+                    ServerMessageParsers.ADD_VAMPIRE.Build(buffer, index, length).Parse(out player).Parse(out bool youngest).CheckPadding();
+                    AddVampire(player, youngest);
+                    break;
+                case ServerMessageType.CAN_VAMPIRES_CONVERT:
+                    if (CanVampiresConvert == null) break;
+                    ServerMessageParsers.CAN_VAMPIRES_CONVERT.Build(buffer, index, length).Parse(out bool canConvert).CheckPadding();
+                    CanVampiresConvert(canConvert);
+                    break;
+                case ServerMessageType.VAMPIRE_DIED:
+                    if (VampireDied == null) break;
+                    ServerMessageParsers.VAMPIRE_DIED.Build(buffer, index, length).Parse(out player).Parse(out optionalPlayer).CheckPadding();
+                    VampireDied(player, optionalPlayer);
+                    break;
+                case ServerMessageType.VAMPIRE_HUNTER_PROMOTED:
+                    if (VampireHunterPromoted == null) break;
+                    ServerMessageParsers.VAMPIRE_HUNTER_PROMOTED.Build(buffer, index, length).CheckPadding();
+                    VampireHunterPromoted();
+                    break;
+                case ServerMessageType.VAMPIRE_VISITED_MESSAGE:
+                    if (VampireVisitedMessage == null) break;
+                    ServerMessageParsers.VAMPIRE_VISITED_MESSAGE.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    VampireVisitedMessage(player);
+                    break;
+                case ServerMessageType.CHECK_USERNAME_RESULT:
+                    if (CheckUsernameResult == null) break;
+                    ServerMessageParsers.CHECK_USERNAME_RESULT.Build(buffer, index, length).Parse(out bool available).CheckPadding();
+                    CheckUsernameResult(available);
+                    break;
+                case ServerMessageType.NAME_CHANGE_RESULT:
+                    if (NameChangeResult == null) break;
+                    ServerMessageParsers.NAME_CHANGE_RESULT.Build(buffer, index, length).Parse(out NameChangeResult nameChangeResult).CheckPadding();
+                    NameChangeResult(nameChangeResult);
+                    break;
+                case ServerMessageType.ACCOUNT_STATE:
+                    if (AccountState == null) break;
+                    ServerMessageParsers.ACCOUNT_STATE.Build(buffer, index, length).Parse(out AccountState accountState).CheckPadding();
+                    AccountState(accountState);
+                    break;
+                case ServerMessageType.PURCHASED_ACCOUNT_ITEMS:
+                    if (PurchasedAccountItems == null) break;
+                    ServerMessageParsers.PURCHASED_ACCOUNT_ITEMS.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<AccountItem> accountItems).CheckPadding();
+                    PurchasedAccountItems(accountItems);
+                    break;
+                case ServerMessageType.ACCOUNT_ITEM_CONSUMED:
+                    if (AccountItemConsumed == null) break;
+                    ServerMessageParsers.ACCOUNT_ITEM_CONSUMED.Build(buffer, index, length).Parse(out AccountItem accountItem).Parse(out uint consumed).Parse(out uint remaining).CheckPadding();
+                    AccountItemConsumed(accountItem, consumed, remaining);
+                    break;
+                case ServerMessageType.TRANSPORTER_NOTIFICATION:
+                    if (TransporterNotification == null) break;
+                    ServerMessageParsers.TRANSPORTER_NOTIFICATION.Build(buffer, index, length).Parse(out player).Parse(out player3).CheckPadding();
+                    TransporterNotification(player, player3);
+                    break;
+                case ServerMessageType.PRODUCT_PURCHASE_RESULT:
+                    if (ProductPurchaseResult == null) break;
+                    ServerMessageParsers.PRODUCT_PURCHASE_RESULT.Build(buffer, index, length).Parse(out ShopItem shopItem).Parse(out uint quantity).Parse(out PurchaseSource purchaseSource).Parse(out uint sourceData).Parse(out PurchaseResult purchaseResult).Parse(out ItemType itemType).Parse(parser => parser.Parse((itemType2, id) => (itemType2, id), p => p.Parse(p2 => p2.CheckPadding())), out IEnumerable<(ItemType itemType, uint id)> items).CheckPadding();
+                    ProductPurchaseResult(shopItem, quantity, purchaseSource, sourceData, purchaseResult, itemType, items);
+                    break;
+                case ServerMessageType.UPDATE_FREE_CURRENCY:
+                    if (UpdateFreeCurrency == null) break;
+                    ServerMessageParsers.UPDATE_FREE_CURRENCY.Build(buffer, index, length).Parse(out meritPoints).CheckPadding();
+                    UpdateFreeCurrency(meritPoints);
+                    break;
+                case ServerMessageType.ACTIVE_EVENTS:
+                    if (ActiveEvents == null) break;
+                    ServerMessageParsers.ACTIVE_EVENTS.Build(buffer, index, length).Parse(parser => parser.Parse((type, rest) => (type, rest.uiFilter, rest.startingSeconds, rest.endingSeconds), p => p.Parse((uiFilter, rest) => (uiFilter, rest.startingSeconds, rest.endingSeconds), p2 => p2.Parse((startingSeconds, endingSeconds) => (startingSeconds, endingSeconds), p3 => p3.Parse(p4 => p4.CheckPadding())))), out IEnumerable<(uint type, string uiFilter, uint startingSeconds, uint endingSeconds)> events).CheckPadding();
+                    ActiveEvents(events);
+                    break;
+                case ServerMessageType.CAULDRON_STATUS:
+                    if (CauldronStatus == null) break;
+                    ServerMessageParsers.CAULDRON_STATUS.Build(buffer, index, length).Parse(out CauldronRewardType rewardType).Parse(out uint progress).Parse(out uint progressTarget).Parse(out bool complete).Parse(out uint freePotionCooldown).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<CauldronPotion> cauldronPotions).Parse(parser => parser.Parse((type, rest) => (type, rest.id, rest.amount), p => p.Parse((id, amount) => (id, amount), p2 => p2.Parse(p3 => p3.CheckPadding()))), out IEnumerable<(ItemType type, uint id, uint amount)> rewards).CheckPadding();
+                    CauldronStatus(rewardType, progress, progressTarget, complete, freePotionCooldown, cauldronPotions, rewards);
+                    break;
+                case ServerMessageType.TAUNT_RESULT:
+                    if (TauntResult == null) break;
+                    ServerMessageParsers.TAUNT_RESULT.Build(buffer, index, length).Parse(out player).Parse(out TauntTargetType targetType).Parse(out Taunt taunt).Parse(out success).CheckPadding();
+                    TauntResult(player, targetType, taunt, success);
+                    break;
+                case ServerMessageType.TAUNT_ACTIVATED:
+                    if (TauntActivated == null) break;
+                    ServerMessageParsers.TAUNT_ACTIVATED.Build(buffer, index, length).Parse(out player).Parse(out targetType).Parse(out taunt).CheckPadding();
+                    TauntActivated(player, targetType, taunt);
+                    break;
+                case ServerMessageType.TAUNT_CONSUMED:
+                    if (TauntConsumed == null) break;
+                    ServerMessageParsers.TAUNT_CONSUMED.Build(buffer, index, length).Parse(out taunt).CheckPadding();
+                    TauntConsumed(taunt);
+                    break;
+                case ServerMessageType.TRACKER_NIGHT_ABILITY:
+                    if (TrackerNightAbility == null) break;
+                    ServerMessageParsers.TRACKER_NIGHT_ABILITY.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    TrackerNightAbility(player);
+                    break;
+                case ServerMessageType.AMBUSHER_NIGHT_ABILITY:
+                    if (AmbusherNightAbility == null) break;
+                    ServerMessageParsers.AMBUSHER_NIGHT_ABILITY.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    AmbusherNightAbility(player);
+                    break;
+                case ServerMessageType.GUARDIAN_ANGEL_PROTECTION:
+                    if (GuardianAngelProtection == null) break;
+                    ServerMessageParsers.GUARDIAN_ANGEL_PROTECTION.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    GuardianAngelProtection(player);
+                    break;
+                case ServerMessageType.PIRATE_DUEL:
+                    if (PirateDuel == null) break;
+                    ServerMessageParsers.PIRATE_DUEL.Build(buffer, index, length).CheckPadding();
+                    PirateDuel();
+                    break;
+                case ServerMessageType.DUEL_TARGET:
+                    if (DuelTarget == null) break;
+                    ServerMessageParsers.DUEL_TARGET.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    DuelTarget(player);
+                    break;
+                case ServerMessageType.POTION_MASTER_POTIONS:
+                    if (PotionMasterPotions == null) break;
+                    ServerMessageParsers.POTION_MASTER_POTIONS.Build(buffer, index, length).Parse(out byte healCooldown).Parse(out byte attackCooldown).Parse(out byte investigateCooldown).CheckPadding();
+                    PotionMasterPotions(healCooldown, attackCooldown, investigateCooldown);
+                    break;
+                case ServerMessageType.HAS_NECRONOMICON:
+                    if (HasNecronomicon == null) break;
+                    byte nightsUntil = 0;
+                    ServerMessageParsers.HAS_NECRONOMICON.Build(buffer, index, length).Parse(out bool noNecronomicon).Parse(!noNecronomicon, parser => parser, parser => parser.Parse(out nightsUntil)).CheckPadding();
+                    HasNecronomicon(noNecronomicon ? (byte?)nightsUntil : null);
+                    break;
+                case ServerMessageType.OTHER_WITCHES:
+                    if (OtherWitches == null) break;
+                    ServerMessageParsers.OTHER_WITCHES.Build(buffer, index, length).Parse(parser => parser.Parse((player2, role2) => (player2, role2), p => p.Parse(p2 => p2.CheckPadding())), out teammates).CheckPadding();
+                    OtherWitches(teammates);
+                    break;
+                case ServerMessageType.PSYCHIC_NIGHT_ABILITY:
+                    if (PsychicNightAbility == null) break;
+                    player4 = default;
+                    ServerMessageParsers.PSYCHIC_NIGHT_ABILITY.Build(buffer, index, length).Parse(out bool isEvil).Parse(out player).Parse(out player3).Parse(!isEvil, parser => parser, parser => parser.Parse(out player4)).CheckPadding();
+                    PsychicNightAbility(player, player3, isEvil ? (Player?)player4 : null);
+                    break;
+                case ServerMessageType.TRAPPER_NIGHT_ABILITY:
+                    if (TrapperNightAbility == null) break;
+                    ServerMessageParsers.TRAPPER_NIGHT_ABILITY.Build(buffer, index, length).Parse(out role).CheckPadding();
+                    TrapperNightAbility(role);
+                    break;
+                case ServerMessageType.TRAPPER_TRAP_STATUS:
+                    if (TrapperTrapStatus == null) break;
+                    ServerMessageParsers.TRAPPER_TRAP_STATUS.Build(buffer, index, length).Parse(out TrapStatus trapStatus).CheckPadding();
+                    TrapperTrapStatus(trapStatus);
+                    break;
+                case ServerMessageType.PESTILENCE_CONVERSION:
+                    if (PestilenceConversion == null) break;
+                    ServerMessageParsers.PESTILENCE_CONVERSION.Build(buffer, index, length).CheckPadding();
+                    PestilenceConversion();
+                    break;
+                case ServerMessageType.JUGGERNAUT_KILL_COUNT:
+                    if (JuggernautKillCount == null) break;
+                    ServerMessageParsers.JUGGERNAUT_KILL_COUNT.Build(buffer, index, length).Parse(out byte killCount).CheckPadding();
+                    JuggernautKillCount(killCount);
+                    break;
+                case ServerMessageType.COVEN_GOT_NECRONOMICON:
+                    if (CovenGotNecronomicon == null) break;
+                    player3 = default;
+                    ServerMessageParsers.COVEN_GOT_NECRONOMICON.Build(buffer, index, length).Parse(out bool newOwner).Parse(out player).Parse(!newOwner, parser => parser, parser => parser.Parse(out player3)).CheckPadding();
+                    CovenGotNecronomicon(player, newOwner ? (Player?)player3 : null);
+                    break;
+                case ServerMessageType.GUARDIAN_ANGEL_PROMOTED:
+                    if (GuardianAngelPromoted == null) break;
+                    ServerMessageParsers.GUARDIAN_ANGEL_PROMOTED.Build(buffer, index, length).CheckPadding();
+                    GuardianAngelPromoted();
+                    break;
+                case ServerMessageType.VIP_TARGET:
+                    if (VIPTarget == null) break;
+                    ServerMessageParsers.VIP_TARGET.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    VIPTarget(player);
+                    break;
+                case ServerMessageType.PIRATE_DUEL_OUTCOME:
+                    if (PirateDuelOutcome == null) break;
+                    ServerMessageParsers.PIRATE_DUEL_OUTCOME.Build(buffer, index, length).Parse(out DuelAttack duelAttack).Parse(out DuelDefense duelDefense).CheckPadding();
+                    PirateDuelOutcome(duelAttack, duelDefense);
+                    break;
+                case ServerMessageType.HOST_SET_PARTY_CONFIG_RESULT:
+                    if (HostSetPartyConfigResult == null) break;
+                    ServerMessageParsers.HOST_SET_PARTY_CONFIG_RESULT.Build(buffer, index, length).Parse(out brand).Parse(out gameMode).Parse(out SetConfigResult setConfigResult).CheckPadding();
+                    HostSetPartyConfigResult(brand, gameMode, setConfigResult);
+                    break;
+                case ServerMessageType.ACTIVE_GAME_MODES:
+                    if (ActiveGameModes == null) break;
+                    ServerMessageParsers.ACTIVE_GAME_MODES.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<GameMode> gameModes).CheckPadding();
+                    ActiveGameModes(gameModes);
+                    break;
+                case ServerMessageType.ACCOUNT_FLAGS:
+                    if (AccountFlags == null) break;
+                    ServerMessageParsers.ACCOUNT_FLAGS.Build(buffer, index, length).Parse(out AccountFlags accountFlags).CheckPadding();
+                    AccountFlags(accountFlags);
+                    break;
+                case ServerMessageType.ZOMBIE_ROTTED:
+                    if (ZombieRotted == null) break;
+                    ServerMessageParsers.ZOMBIE_ROTTED.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    ZombieRotted(player);
+                    break;
+                case ServerMessageType.LOVER_TARGET:
+                    if (LoverTarget == null) break;
+                    ServerMessageParsers.LOVER_TARGET.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    LoverTarget(player);
+                    break;
+                case ServerMessageType.PLAGUE_SPREAD:
+                    if (PlagueSpread == null) break;
+                    ServerMessageParsers.PLAGUE_SPREAD.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    PlagueSpread(player);
+                    break;
+                case ServerMessageType.RIVAL_TARGET:
+                    if (RivalTarget == null) break;
+                    ServerMessageParsers.RIVAL_TARGET.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    RivalTarget(player);
+                    break;
+                case ServerMessageType.RANKED_INFO:
+                    if (RankedInfo == null) break;
+                    ServerMessageParsers.RANKED_INFO.Build(buffer, index, length).Parse(out gameMode).Parse(out uint practiceGamesPlayed).Parse(out uint careerWins).Parse(out uint careerLosses).Parse(out uint careerDraws).Parse(out uint careerLeaves).Parse(out uint careerHighRating).Parse(out uint seasonNumber).Parse(out bool offseason).Parse(out uint placementGamesNeeded).Parse(out uint seasonWins).Parse(out uint seasonLosses).Parse(out uint seasonDraws).Parse(out uint seasonLeaves).Parse(out uint seasonHighRating).Parse(out uint seasonRating).CheckPadding();
+                    RankedInfo(gameMode, practiceGamesPlayed, careerWins, careerLosses, careerDraws, careerLeaves, careerHighRating, seasonNumber, offseason, placementGamesNeeded, seasonWins, seasonLosses, seasonDraws, seasonLeaves, seasonHighRating, seasonRating);
+                    break;
+                case ServerMessageType.JAILOR_DEATH_NOTE:
+                    if (JailorDeathNote == null) break;
+                    ServerMessageParsers.JAILOR_DEATH_NOTE.Build(buffer, index, length).Parse(out player).Parse(out longTimer).Parse(out ExecuteReason executeReason).CheckPadding();
+                    JailorDeathNote(player, longTimer, executeReason);
+                    break;
+                case ServerMessageType.DISCONNECTED:
+                    if (Disconnected == null) break;
+                    ServerMessageParsers.DISCONNECTED.Build(buffer, index, length).Parse(out DisconnectReason disconnectReason).CheckPadding();
+                    Disconnected(disconnectReason);
+                    break;
+                case ServerMessageType.SPY_NIGHT_INFO:
+                    if (SpyNightInfo == null) break;
+                    ServerMessageParsers.SPY_NIGHT_INFO.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<LocalizationTable> tableMessages).CheckPadding();
+                    SpyNightInfo(tableMessages);
+                    break;
+                case ServerMessageType.SERVER_FLAGS:
+                    if (ServerFlags == null) break;
+                    ServerMessageParsers.SERVER_FLAGS.Build(buffer, index, length).Parse(parser => parser.Parse(p => p.CheckPadding()), out IEnumerable<bool> serverFlags).CheckPadding();
+                    ServerFlags(serverFlags);
+                    break;
+            }
+        }
     }
 }

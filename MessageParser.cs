@@ -22,7 +22,10 @@ namespace ToSParser
 
     public interface Parser<Type, Parent> : UnknownParser<Parser<Type, Parent>> where Parent : UnknownParser<Parent>
     {
+        Parent Parse(out Type value, int maxLimit);
         Parent Parse(out Type value);
+        Type Parse(Action<Parent> action);
+        O Parse<I, O>(Func<Type, I, O> merge, Func<Parent, I> parser);
         void SetMaxLimit(int limit);
     }
 
@@ -35,7 +38,8 @@ namespace ToSParser
     {
         Repeat GetRepeat();
         Parent GetParent();
-        Parent Parse(Func<Repeat, RootParser> parser, out int count);
+        Parent Parse<T>(Func<Repeat, T> parser, out IEnumerable<T> values);
+        IEnumerable<T> Parse<T>(Func<Repeat, T> parser, Action<Parent> action);
     }
 
     public interface RepeatWriter<Repeat, Parent> : UnknownWriter<RepeatWriter<Repeat, Parent>> where Parent : UnknownWriter<Parent> where Repeat : UnknownWriter<Repeat>
@@ -238,6 +242,12 @@ namespace ToSParser
 
         public virtual int GetLimit() => parent.GetLimit();
 
+        public virtual Parent Parse(out Type value, int maxLimit)
+        {
+            SetMaxLimit(maxLimit);
+            return Parse(out value);
+        }
+
         public virtual Parent Parse(out Type value)
         {
             int index2 = index();
@@ -259,9 +269,21 @@ namespace ToSParser
             throw new ArgumentException("insufficient data");
         }
 
+        public Type Parse(Action<Parent> action)
+        {
+            action(Parse(out Type result));
+            return result;
+        }
+
+        public O Parse<I, O>(Func<Type, I, O> merge, Func<Parent, I> parser)
+        {
+            I r2 = parser(Parse(out Type r1));
+            return merge(r1, r2);
+        }
+
         public virtual Parser<Type, Parent> Copy(byte[] buffer, BufferIndex index, int size) => new BaseParser<Type, Parent>(buffer, index, size, parent.Copy(buffer, index, size), converter);
 
-        public void SetMaxLimit(int limit) => this.size = limit;
+        public void SetMaxLimit(int limit) => size = limit;
     }
 
     internal class BaseWriter<Type, Parent> : Writer<Type, Parent> where Parent : UnknownWriter<Parent>
@@ -361,30 +383,37 @@ namespace ToSParser
 
         public Parent GetParent() => parent;
 
-        public virtual Parent Parse(Func<Repeat, RootParser> action, out int count)
+        public virtual Parent Parse<T>(Func<Repeat, T> action, out IEnumerable<T> values)
         {
             int limit = index();
             int copy = index();
+            List<T> result = new List<T>();
             while (limit <= size)
             {
                 limit = parent.GetLimit();
                 index() = copy;
-                count = 0;
                 while (index() < limit)
                 {
                     try
                     {
-                        action(repeat).CheckPadding();
-                        count++;
+                        result.Add(action(repeat));
                     }
                     catch (Exception)
                     {
+                        result.Clear();
                         continue;
                     }
                 }
+                values = result;
                 return parent;
             }
             throw new ArgumentException("insufficient data");
+        }
+
+        public IEnumerable<T> Parse<T>(Func<Repeat, T> parser, Action<Parent> action)
+        {
+            action(Parse(parser, out IEnumerable<T> values));
+            return values;
         }
 
         public virtual RepeatParser<Repeat, Parent> Copy(byte[] buffer, BufferIndex index, int size) => new BaseRepeatParser<Repeat, Parent>(buffer, index, size, parent.Copy(buffer, index, size), clip, repeat.Copy(buffer, index, size));
@@ -440,10 +469,10 @@ namespace ToSParser
             return size;
         }
 
-        public override Parent Parse(Func<Repeat, RootParser> action, out int count)
+        public override Parent Parse<T>(Func<Repeat, T> action, out IEnumerable<T> values)
         {
             if (index() < size && buffer[index()++] != delimiter) throw new ArgumentException("illegal byte");
-            return base.Parse(action, out count);
+            return base.Parse(action, out values);
         }
 
         public override RepeatParser<Repeat, Parent> Copy(byte[] buffer, BufferIndex index, int size) => new DelimitedRepeatParser<Repeat, Parent>(buffer, index, size, parent.Copy(buffer, index, size), clip, repeat.Copy(buffer, index, size), delimiter);
@@ -519,6 +548,8 @@ namespace ToSParser
 
         public static Converter<Option<R>> Optional<R>(Converter<R> converter) => new ConverterImpl<Option<R>>((byte[] buffer, ref int index, int count) => { try { return converter.FromBytes(buffer, ref index, count).SomeNotNull(); } catch (Exception) { return Option.None<R>(); } }, (byte[] buffer, ref int index, Option<R> value) => { if (value.HasValue) converter.ToBytes(buffer, ref index, value.ValueOr(default(R))); });
 
+        public static Converter<bool> Optional(byte value) => new ConverterImpl<bool>(ToOptional(value), FromOptional(value));
+
         public static Converter<bool> Boolean<T>(Converter<T> converter) where T : IConvertible => new ConverterImpl<bool>((byte[] buffer, ref int index, int count) => Convert.ToUInt32(converter.FromBytes(buffer, ref index, count)) != 0u, (byte[] buffer, ref int index, bool value) => converter.ToBytes(buffer, ref index, (value ? 1u : 0u).To<T>()));
 
         public static Converter<T?> Safe<T>(Converter<T> converter, string or) where T : struct => new ConverterImpl<T?>((byte[] buffer, ref int index, int count) => { try { return converter.FromBytes(buffer, ref index, count); } catch (Exception) { return null; } }, (byte[] buffer, ref int index, T? value) => { if (value != null) converter.ToBytes(buffer, ref index, (T)value); else FromString(buffer, ref index, or); });
@@ -528,8 +559,8 @@ namespace ToSParser
 
         private class ConverterImpl<T> : Converter<T>
         {
-            private FromBytes<T> from;
-            private ToBytes<T> to;
+            private readonly FromBytes<T> from;
+            private readonly ToBytes<T> to;
 
             public ConverterImpl(FromBytes<T> from, ToBytes<T> to)
             {
@@ -576,25 +607,26 @@ namespace ToSParser
         private static FromBytes<T> ToByte<T>(uint offset) where T : IConvertible => (byte[] buffer, ref int index, int count) => (buffer[index++] - offset).To<T>();
         private static ToBytes<T> FromByte<T>(uint offset) where T : IConvertible => (byte[] buffer, ref int index, T value) => buffer[index++] = (byte)(Convert.ToUInt32(value) + offset);
 
+        private static FromBytes<bool> ToOptional(byte value) => (byte[] buffer, ref int index, int count) => buffer[index] == value && index == index++;
+        private static ToBytes<bool> FromOptional(byte value) => (byte[] buffer, ref int index, bool pad) =>
+        {
+            if (pad) buffer[index++] = value;
+        };
+
         private static T To<T>(this uint value) where T : IConvertible => (T)(typeof(T).GetTypeInfo().IsEnum ? Enum.Parse(typeof(T), value.ToString()) : Convert.ChangeType(value, typeof(T)));
     }
 
     public class MessageParser
     {
-        //public delegate RootWriter Writer(byte[] buffer, int index);
-        //public delegate RootParser PartialWriter<P>(P parser, byte[] buffer, ref int index) where P : UnknownParser;
-        //public delegate RootParser PartialReader<P>(P parser, byte[] buffer, ref int index, int length) where P : UnknownParser;
-
-        private readonly Action<byte[], int, int> onRead;
-        private readonly Action<byte[], int, int> onWrite;
+        public event Action<byte[], int, int> MessageRead;
+        public event Action<byte[], int, int> MessageWrite;
+        
         private byte[] read;
         private byte[] write;
         private int length;
 
-        public MessageParser(Action<byte[], int, int> onRead, Action<byte[], int, int> onWrite)
+        public MessageParser()
         {
-            this.onRead = onRead;
-            this.onWrite = onWrite;
             read = new byte[4096];
             write = new byte[4096];
         }
@@ -609,7 +641,7 @@ namespace ToSParser
                 {
                     try
                     {
-                        onRead(read, 0, length);
+                        MessageRead?.Invoke(read, 0, length);
                     }
                     catch (Exception e)
                     {
@@ -633,7 +665,7 @@ namespace ToSParser
                     write[length++] = 0;
                     try
                     {
-                        onWrite(write, 0, length);
+                        MessageWrite?.Invoke(write, 0, length);
                     }
                     catch (Exception e)
                     {
@@ -663,5 +695,10 @@ namespace ToSParser
     {
         R FromBytes(byte[] buffer, ref int index, int count);
         void ToBytes(byte[] buffer, ref int index, R value);
+    }
+
+    internal static class ParserExtensions
+    {
+        internal static T? ToNullable<T>(this Option<T> option) where T : struct => option.Map(p => (T?)p).ValueOr((T?)null);
     }
 }

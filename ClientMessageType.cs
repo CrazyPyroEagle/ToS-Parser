@@ -91,7 +91,7 @@ namespace ToSParser
         SET_PARTY_CONFIG,
         NOTIFY_OF_BRAND_OWNERSHIP,
         SET_HYPNOTIST_CHOICE,
-        SET_JAILOR_CHOICE
+        SET_JAILOR_DEATH_NOTE
     }
 
     public static class ClientMessageParsers
@@ -226,6 +226,415 @@ namespace ToSParser
         public static void SetPartyConfig(this MessageParser parser, Brand brand, GameMode mode) => parser.Parse((byte)ClientMessageType.SET_PARTY_CONFIG, (buffer, index) => SET_PARTY_CONFIG.Build(buffer, index).Parse(brand).Parse(mode));
         public static void NotifyOfBrandOwnership(this MessageParser parser, Brand brand) => parser.Parse((byte)ClientMessageType.NOTIFY_OF_BRAND_OWNERSHIP, (buffer, index) => NOTIFY_OF_BRAND_OWNERSHIP.Build(buffer, index).Parse(brand));
         public static void SetHypnotistChoice(this MessageParser parser, LocalizationTable message) => parser.Parse((byte)ClientMessageType.SET_HYPNOTIST_CHOICE, (buffer, index) => SET_HYPNOTIST_CHOICE.Build(buffer, index).Parse(message));
-        public static void SetJailorDeathNote(this MessageParser parser, ExecuteReason reason) => parser.Parse((byte)ClientMessageType.SET_JAILOR_CHOICE, (buffer, index) => SET_JAILOR_DEATH_NOTE.Build(buffer, index).Parse(reason));
+        public static void SetJailorDeathNote(this MessageParser parser, ExecuteReason reason) => parser.Parse((byte)ClientMessageType.SET_JAILOR_DEATH_NOTE, (buffer, index) => SET_JAILOR_DEATH_NOTE.Build(buffer, index).Parse(reason));
+    }
+
+    public class ClientMessageParser
+    {
+        public event Action<string> AuthenticateFacebook;
+        public event Action<AuthenticationMode, bool, uint, string, string, string> Authenticate;
+        public event Action<string> SendChatBoxMessage;
+        public event Action<Catalog> ClickedOnCatalog;
+        public event Action<byte, byte> ClickedOnPossibleRoles;
+        public event Action<Role> ClickedOnAddButton;
+        public event Action<byte> ClickedOnRemoveButton;
+        public event Action<Player, string> SendPrivateMessage;
+        public event Action ClickedOnStartButton;
+        public event Action<Player> SetVote;
+        public event Action<Player> SetTarget;
+        public event Action<Player> SetSecondTarget;
+        public event Action JudgementVoteGuilty;
+        public event Action JudgementVoteInnocent;
+        public event Action<Player> SetDayChoice;
+        public event Action<string> SaveLastWill;
+        public event Action<string> SaveDeathNote;
+        public event Action<Player, TargetType> SetTargetMafiaOrWitch;
+        public event Action<Character, House, Background, Pet?, LobbyIcon, DeathAnimation, Scroll?, Scroll?, Scroll?, string> UpdateCustomizations;
+        public event Action<string> ChooseName;
+        public event Action<Player, ReportReason, string> ReportPlayer;
+        public event Action VoteToRepickHost;
+        public event Action<SystemCommand, string> SendSystemMessage;
+        public event Action<string> RequestFriend;
+        public event Action<string, uint> AcceptFriend;
+        public event Action<string, uint> RemoveFriend;
+        public event Action<uint> DeclineFriendRequest;
+        public event Action<string, string> SendFriendMessage;
+        public event Action<GameMode> JoinLobby;
+        public event Action<Brand> CreateParty;
+        public event Action<string> InviteToParty;
+        public event Action RequestLeaveParty;
+        public event Action<PartyInviteResponse, uint> RespondPartyInvite;
+        public event Action<GameMode> PartyStart;
+        public event Action<string> SendPartyMessage;
+        public event Action<Setting, byte> UpdateSettings;
+        public event Action<AFKStatus> UpdateAFKStatus;
+        public event Action LeaveGame;
+        public event Action<string> RedeemCode;
+        public event Action<string> SetPartyHost;
+        public event Action<string> KickFromParty;
+        public event Action<string> GivePartyInvitePower;
+        public event Action<SteamItem, string> RequestPurchaseSteam;
+        public event Action<string, string, string, string, string> RegisterSteam;
+        public event Action<string, string, string, string> RegisterForums;
+        public event Action<string, string, string> LinkSteam;
+        public event Action<GameMode> JoinRankedQueue;
+        public event Action LeaveRankedQueue;
+        public event Action AcceptRanked;
+        public event Action LeavePostGameLobby;
+        public event Action<string> SaveForgedWill;
+        public event Action RequestPlayerStatistics;
+        public event Action<uint> AcceptPromotion;
+        public event Action<string> CheckUsername;
+        public event Action<string> RequestNameChange;
+        public event Action<ShopItem, uint> RequestPurchase;
+        public event Action RequestCauldronStatus;
+        public event Action CollectCauldronPrize;
+        public event Action<Player, TauntTargetType, Taunt> UseTaunt;
+        public event Action<byte> SetPirateChoice;
+        public event Action<Potion> SetPotionMasterChoice;
+        public event Action<Brand, GameMode> SetPartyConfig;
+        public event Action<Brand> NotifyOfBrandOwnership;
+        public event Action<LocalizationTable> SetHypnotistChoice;
+        public event Action<ExecuteReason> SetJailorDeathNote;
+
+        public ClientMessageParser(MessageParser parser) => parser.MessageRead += Parse;
+
+        protected void Parse(byte[] buffer, int index, int length)
+        {
+            switch ((ClientMessageType)buffer[index++])
+            {
+                case ClientMessageType.AUTHENTICATE_FACEBOOK:
+                    if (AuthenticateFacebook == null) break;
+                    ClientMessageParsers.AUTHENTICATE_FACEBOOK.Build(buffer, index, length).Parse(out string accessToken);
+                    AuthenticateFacebook(accessToken);
+                    break;
+                case ClientMessageType.AUTHENTICATE:
+                    if (Authenticate == null) break;
+                    bool encrypted = false;
+                    bool linkSteam = true;
+                    uint buildID = 0u;
+                    string username = null;
+                    string password = null;
+                    string extra = null;
+                    ClientMessageParsers.AUTHENTICATE.Build(buffer, index, length).Parse(out AuthenticationMode authMode).Parse(authMode != AuthenticationMode.STEAM, p => p.Parse(out encrypted).Parse(out linkSteam).Parse(out buildID).Parse(authMode != AuthenticationMode.VERIFIED_FACEBOOK, p2 => p2.Parse(out username).Parse(out extra).Parse(linkSteam, p3 => p3.Parse(out password), p3 => p3), p2 => p2), p => p.Parse(out extra)).CheckPadding();
+                    Authenticate(authMode, encrypted, buildID, username, linkSteam ? password : extra, extra);
+                    break;
+                case ClientMessageType.SEND_CHAT_BOX_MESSAGE:
+                    if (SendChatBoxMessage == null) break;
+                    ClientMessageParsers.SEND_CHAT_BOX_MESSAGE.Build(buffer, index, length).Parse(out string message).CheckPadding();
+                    SendChatBoxMessage(message);
+                    break;
+                case ClientMessageType.CLICKED_ON_CATALOG:
+                    if (ClickedOnCatalog == null) break;
+                    ClientMessageParsers.CLICKED_ON_CATALOG.Build(buffer, index, length).Parse(out Catalog catalog).CheckPadding();
+                    ClickedOnCatalog(catalog);
+                    break;
+                case ClientMessageType.CLICKED_ON_POSSIBLE_ROLES:
+                    if (ClickedOnPossibleRoles == null) break;
+                    ClientMessageParsers.CLICKED_ON_POSSIBLE_ROLES.Build(buffer, index, length).Parse(out byte selectedIndex).Parse(out byte scrollPosition).CheckPadding();
+                    ClickedOnPossibleRoles(selectedIndex, scrollPosition);
+                    break;
+                case ClientMessageType.CLICKED_ON_ADD_BUTTON:
+                    if (ClickedOnAddButton == null) break;
+                    ClientMessageParsers.CLICKED_ON_ADD_BUTTON.Build(buffer, index, length).Parse(out Role role).CheckPadding();
+                    ClickedOnAddButton(role);
+                    break;
+                case ClientMessageType.CLICKED_ON_REMOVE_BUTTON:
+                    if (ClickedOnRemoveButton == null) break;
+                    ClientMessageParsers.CLICKED_ON_REMOVE_BUTTON.Build(buffer, index, length).Parse(out byte slotIndex).CheckPadding();
+                    ClickedOnRemoveButton(slotIndex);
+                    break;
+                case ClientMessageType.SEND_PRIVATE_MESSAGE:
+                    if (SendPrivateMessage == null) break;
+                    ClientMessageParsers.SEND_PRIVATE_MESSAGE.Build(buffer, index, length).Parse(out Player player).Parse(out message).CheckPadding();
+                    SendPrivateMessage(player, message);
+                    break;
+                case ClientMessageType.CLICKED_ON_START_BUTTON:
+                    if (ClickedOnStartButton == null) break;
+                    ClientMessageParsers.CLICKED_ON_START_BUTTON.Build(buffer, index, length).CheckPadding();
+                    ClickedOnStartButton();
+                    break;
+                case ClientMessageType.SET_VOTE:
+                    if (SetVote == null) break;
+                    ClientMessageParsers.SET_VOTE.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    SetVote(player);
+                    break;
+                case ClientMessageType.SET_TARGET:
+                    if (SetTarget == null) break;
+                    ClientMessageParsers.SET_TARGET.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    SetTarget(player);
+                    break;
+                case ClientMessageType.SET_SECOND_TARGET:
+                    if (SetSecondTarget == null) break;
+                    ClientMessageParsers.SET_SECOND_TARGET.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    SetSecondTarget(player);
+                    break;
+                case ClientMessageType.JUDGEMENT_VOTE_GUILTY:
+                    if (JudgementVoteGuilty == null) break;
+                    ClientMessageParsers.JUDGEMENT_VOTE_GUILTY.Build(buffer, index, length).CheckPadding();
+                    JudgementVoteGuilty();
+                    break;
+                case ClientMessageType.JUDGEMENT_VOTE_INNOCENT:
+                    if (JudgementVoteInnocent == null) break;
+                    ClientMessageParsers.JUDGEMENT_VOTE_INNOCENT.Build(buffer, index, length).CheckPadding();
+                    JudgementVoteInnocent();
+                    break;
+                case ClientMessageType.SET_DAY_CHOICE:
+                    if (SetDayChoice == null) break;
+                    ClientMessageParsers.SET_DAY_CHOICE.Build(buffer, index, length).Parse(out player).CheckPadding();
+                    SetDayChoice(player);
+                    break;
+                case ClientMessageType.SAVE_LAST_WILL:
+                    if (SaveLastWill == null) break;
+                    ClientMessageParsers.SAVE_LAST_WILL.Build(buffer, index, length).Parse(out string lastWill).CheckPadding();
+                    SaveLastWill(lastWill);
+                    break;
+                case ClientMessageType.SAVE_DEATH_NOTE:
+                    if (SaveDeathNote == null) break;
+                    ClientMessageParsers.SAVE_DEATH_NOTE.Build(buffer, index, length).Parse(out string deathNote).CheckPadding();
+                    SaveDeathNote(deathNote);
+                    break;
+                case ClientMessageType.SET_TARGET_MAFIA_OR_WITCH:
+                    if (SetTargetMafiaOrWitch == null) break;
+                    ClientMessageParsers.SET_TARGET_MAFIA_OR_WITCH.Build(buffer, index, length).Parse(out Player target).Parse(out TargetType targetType).CheckPadding();
+                    SetTargetMafiaOrWitch(target, targetType);
+                    break;
+                case ClientMessageType.UPDATE_CUSTOMIZATIONS:
+                    if (UpdateCustomizations == null) break;
+                    ClientMessageParsers.UPDATE_CUSTOMIZATIONS.Build(buffer, index, length).Parse(out Character character).Parse(out House house).Parse(out Background background).Parse(out Pet? pet).Parse(out LobbyIcon lobbyIcon).Parse(out DeathAnimation deathAnimation).Parse(out Scroll? scroll1).Parse(out Scroll? scroll2).Parse(out Scroll? scroll3).Parse(out string name).CheckPadding();
+                    UpdateCustomizations(character, house, background, pet, lobbyIcon, deathAnimation, scroll1, scroll2, scroll3, name);
+                    break;
+                case ClientMessageType.CHOOSE_NAME:
+                    if (ChooseName == null) break;
+                    ClientMessageParsers.CHOOSE_NAME.Build(buffer, index, length).Parse(out name).CheckPadding();
+                    ChooseName(name);
+                    break;
+                case ClientMessageType.REPORT_PLAYER:
+                    if (ReportPlayer == null) break;
+                    ClientMessageParsers.REPORT_PLAYER.Build(buffer, index, length).Parse(out player).Parse(out ReportReason reportReason).Parse(out message);
+                    ReportPlayer(player, reportReason, message);
+                    break;
+                case ClientMessageType.VOTE_TO_REPICK_HOST:
+                    if (VoteToRepickHost == null) break;
+                    ClientMessageParsers.VOTE_TO_REPICK_HOST.Build(buffer, index, length).CheckPadding();
+                    VoteToRepickHost();
+                    break;
+                case ClientMessageType.SEND_SYSTEM_MESSAGE:
+                    if (SendSystemMessage == null) break;
+                    ClientMessageParsers.SEND_SYSTEM_MESSAGE.Build(buffer, index, length).Parse(out SystemCommand systemCommand).Parse(out extra).CheckPadding();
+                    SendSystemMessage(systemCommand, extra);
+                    break;
+                case ClientMessageType.REQUEST_FRIEND:
+                    if (RequestFriend == null) break;
+                    ClientMessageParsers.REQUEST_FRIEND.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    RequestFriend(username);
+                    break;
+                case ClientMessageType.ACCEPT_FRIEND:
+                    if (AcceptFriend == null) break;
+                    ClientMessageParsers.ACCEPT_FRIEND.Build(buffer, index, length).Parse(out username).Parse(out uint userID).CheckPadding();
+                    AcceptFriend(username, userID);
+                    break;
+                case ClientMessageType.REMOVE_FRIEND:
+                    if (RemoveFriend == null) break;
+                    ClientMessageParsers.REMOVE_FRIEND.Build(buffer, index, length).Parse(out username).Parse(out userID).CheckPadding();
+                    RemoveFriend(username, userID);
+                    break;
+                case ClientMessageType.DECLINE_FRIEND_REQUEST:
+                    if (DeclineFriendRequest == null) break;
+                    ClientMessageParsers.DECLINE_FRIEND_REQUEST.Build(buffer, index, length).Parse(out userID).CheckPadding();
+                    DeclineFriendRequest(userID);
+                    break;
+                case ClientMessageType.SEND_FRIEND_MESSAGE:
+                    if (SendFriendMessage == null) break;
+                    ClientMessageParsers.SEND_FRIEND_MESSAGE.Build(buffer, index, length).Parse(out username).Parse(out message).CheckPadding();
+                    SendFriendMessage(username, message);
+                    break;
+                case ClientMessageType.JOIN_LOBBY:
+                    if (JoinLobby == null) break;
+                    ClientMessageParsers.JOIN_LOBBY.Build(buffer, index, length).Parse(out GameMode gameMode).CheckPadding();
+                    JoinLobby(gameMode);
+                    break;
+                case ClientMessageType.CREATE_PARTY:
+                    if (CreateParty == null) break;
+                    ClientMessageParsers.CREATE_PARTY.Build(buffer, index, length).Parse(out Brand brand).CheckPadding();
+                    CreateParty(brand);
+                    break;
+                case ClientMessageType.INVITE_TO_PARTY:
+                    if (InviteToParty == null) break;
+                    ClientMessageParsers.INVITE_TO_PARTY.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    InviteToParty(username);
+                    break;
+                case ClientMessageType.REQUEST_LEAVE_PARTY:
+                    if (RequestLeaveParty == null) break;
+                    ClientMessageParsers.REQUEST_LEAVE_PARTY.Build(buffer, index, length).CheckPadding();
+                    RequestLeaveParty();
+                    break;
+                case ClientMessageType.RESPOND_PARTY_INVITE:
+                    if (RespondPartyInvite == null) break;
+                    ClientMessageParsers.RESPOND_PARTY_INVITE.Build(buffer, index, length).Parse(out PartyInviteResponse inviteResponse).Parse(out userID).CheckPadding();
+                    RespondPartyInvite(inviteResponse, userID);
+                    break;
+                case ClientMessageType.PARTY_START:
+                    if (PartyStart == null) break;
+                    ClientMessageParsers.PARTY_START.Build(buffer, index, length).Parse(out gameMode).CheckPadding();
+                    PartyStart(gameMode);
+                    break;
+                case ClientMessageType.SEND_PARTY_MESSAGE:
+                    if (SendPartyMessage == null) break;
+                    ClientMessageParsers.SEND_PARTY_MESSAGE.Build(buffer, index, length).Parse(out message).CheckPadding();
+                    SendPartyMessage(message);
+                    break;
+                case ClientMessageType.UPDATE_SETTINGS:
+                    if (UpdateSettings == null) break;
+                    ClientMessageParsers.UPDATE_SETTINGS.Build(buffer, index, length).Parse(out Setting setting).Parse(out byte value).CheckPadding();
+                    UpdateSettings(setting, value);
+                    break;
+                case ClientMessageType.UPDATE_AFK_STATUS:
+                    if (UpdateAFKStatus == null) break;
+                    ClientMessageParsers.UPDATE_AFK_STATUS.Build(buffer, index, length).Parse(out AFKStatus afkStatus).CheckPadding();
+                    UpdateAFKStatus(afkStatus);
+                    break;
+                case ClientMessageType.LEAVE_GAME:
+                    if (LeaveGame == null) break;
+                    ClientMessageParsers.LEAVE_GAME.Build(buffer, index, length).CheckPadding();
+                    LeaveGame();
+                    break;
+                case ClientMessageType.REDEEM_CODE:
+                    if (RedeemCode == null) break;
+                    ClientMessageParsers.REDEEM_CODE.Build(buffer, index, length).Parse(out string code).CheckPadding();
+                    RedeemCode(code);
+                    break;
+                case ClientMessageType.SET_PARTY_HOST:
+                    if (SetPartyHost == null) break;
+                    ClientMessageParsers.SET_PARTY_HOST.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    SetPartyHost(username);
+                    break;
+                case ClientMessageType.KICK_FROM_PARTY:
+                    if (KickFromParty == null) break;
+                    ClientMessageParsers.KICK_FROM_PARTY.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    KickFromParty(username);
+                    break;
+                case ClientMessageType.GIVE_PARTY_INVITE_POWER:
+                    if (GivePartyInvitePower == null) break;
+                    ClientMessageParsers.GIVE_PARTY_INVITE_POWER.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    GivePartyInvitePower(username);
+                    break;
+                case ClientMessageType.REQUEST_PURCHASE_STEAM:
+                    if (RequestPurchaseSteam == null) break;
+                    ClientMessageParsers.REQUEST_PURCHASE_STEAM.Build(buffer, index, length).Parse(out SteamItem steamItem).Parse(out string steamUserID).CheckPadding();
+                    RequestPurchaseSteam(steamItem, steamUserID);
+                    break;
+                case ClientMessageType.REGISTER_STEAM:
+                    if (RegisterSteam == null) break;
+                    ClientMessageParsers.REGISTER_STEAM.Build(buffer, index, length).Parse(out byte usernameLength).Parse(out byte passwordLength).Parse(out byte emailLength).Parse(out byte referrerLength).Parse(out username, usernameLength).Parse(out password, passwordLength).Parse(out string email, emailLength).Parse(out string referrer, referrerLength).Parse(out string steamAuthTicket).CheckPadding();
+                    RegisterSteam(username, password, email, referrer, steamAuthTicket);
+                    break;
+                case ClientMessageType.REGISTER_FORUMS:
+                    if (RegisterForums == null) break;
+                    ClientMessageParsers.REGISTER_FORUMS.Build(buffer, index, length).Parse(out usernameLength).Parse(out passwordLength).Parse(out emailLength).Parse(out username, usernameLength).Parse(out password, passwordLength).Parse(out email, emailLength).Parse(out referrer).CheckPadding();
+                    RegisterForums(username, password, email, referrer);
+                    break;
+                case ClientMessageType.LINK_STEAM:
+                    if (LinkSteam == null) break;
+                    ClientMessageParsers.LINK_STEAM.Build(buffer, index, length).Parse(out usernameLength).Parse(out passwordLength).Parse(out username, usernameLength).Parse(out password, passwordLength).Parse(out steamAuthTicket).CheckPadding();
+                    LinkSteam(username, password, steamAuthTicket);
+                    break;
+                case ClientMessageType.JOIN_RANKED_QUEUE:
+                    if (JoinRankedQueue == null) break;
+                    ClientMessageParsers.JOIN_RANKED_QUEUE.Build(buffer, index, length).Parse(out gameMode).CheckPadding();
+                    JoinRankedQueue(gameMode);
+                    break;
+                case ClientMessageType.LEAVE_RANKED_QUEUE:
+                    if (LeaveRankedQueue == null) break;
+                    ClientMessageParsers.LEAVE_RANKED_QUEUE.Build(buffer, index, length).CheckPadding();
+                    LeaveRankedQueue();
+                    break;
+                case ClientMessageType.ACCEPT_RANKED:
+                    if (AcceptRanked == null) break;
+                    ClientMessageParsers.ACCEPT_RANKED.Build(buffer, index, length).CheckPadding();
+                    AcceptRanked();
+                    break;
+                case ClientMessageType.LEAVE_POST_GAME_LOBBY:
+                    if (LeavePostGameLobby == null) break;
+                    ClientMessageParsers.LEAVE_POST_GAME_LOBBY.Build(buffer, index, length).CheckPadding();
+                    LeavePostGameLobby();
+                    break;
+                case ClientMessageType.SAVE_FORGED_WILL:
+                    if (SaveForgedWill == null) break;
+                    ClientMessageParsers.SAVE_FORGED_WILL.Build(buffer, index, length).Parse(out lastWill).CheckPadding();
+                    SaveForgedWill(lastWill);
+                    break;
+                case ClientMessageType.REQUEST_PLAYER_STATISTICS:
+                    if (RequestPlayerStatistics == null) break;
+                    ClientMessageParsers.REQUEST_PLAYER_STATISTICS.Build(buffer, index, length).CheckPadding();
+                    RequestPlayerStatistics();
+                    break;
+                case ClientMessageType.ACCEPT_PROMOTION:
+                    if (AcceptPromotion == null) break;
+                    ClientMessageParsers.ACCEPT_PROMOTION.Build(buffer, index, length).Parse(out uint refID).CheckPadding();
+                    AcceptPromotion(refID);
+                    break;
+                case ClientMessageType.CHECK_USERNAME:
+                    if (CheckUsername == null) break;
+                    ClientMessageParsers.CHECK_USERNAME.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    CheckUsername(username);
+                    break;
+                case ClientMessageType.REQUEST_NAME_CHANGE:
+                    if (RequestNameChange == null) break;
+                    ClientMessageParsers.REQUEST_NAME_CHANGE.Build(buffer, index, length).Parse(out username).CheckPadding();
+                    RequestNameChange(username);
+                    break;
+                case ClientMessageType.REQUEST_PURCHASE:
+                    if (RequestPurchase == null) break;
+                    ClientMessageParsers.REQUEST_PURCHASE.Build(buffer, index, length).Parse(out ShopItem shopItem).Parse(out uint amount).CheckPadding();
+                    RequestPurchase(shopItem, amount);
+                    break;
+                case ClientMessageType.REQUEST_CAULDRON_STATUS:
+                    if (RequestCauldronStatus == null) break;
+                    ClientMessageParsers.REQUEST_CAULDRON_STATUS.Build(buffer, index, length).CheckPadding();
+                    RequestCauldronStatus();
+                    break;
+                case ClientMessageType.COLLECT_CAULDRON_PRIZE:
+                    if (CollectCauldronPrize == null) break;
+                    ClientMessageParsers.COLLECT_CAULDRON_PRIZE.Build(buffer, index, length).CheckPadding();
+                    CollectCauldronPrize();
+                    break;
+                case ClientMessageType.USE_TAUNT:
+                    if (UseTaunt == null) break;
+                    ClientMessageParsers.USE_TAUNT.Build(buffer, index, length).Parse(out player).Parse(out TauntTargetType tauntType).Parse(out Taunt taunt).CheckPadding();
+                    UseTaunt(player, tauntType, taunt);
+                    break;
+                case ClientMessageType.SET_PIRATE_CHOICE:
+                    if (SetPirateChoice == null) break;
+                    ClientMessageParsers.SET_PIRATE_CHOICE.Build(buffer, index, length).Parse(out byte pirateChoice).CheckPadding();
+                    SetPirateChoice(pirateChoice);
+                    break;
+                case ClientMessageType.SET_POTION_MASTER_CHOICE:
+                    if (SetPotionMasterChoice == null) break;
+                    ClientMessageParsers.SET_POTION_MASTER_CHOICE.Build(buffer, index, length).Parse(out Potion potion).CheckPadding();
+                    SetPotionMasterChoice(potion);
+                    break;
+                case ClientMessageType.SET_PARTY_CONFIG:
+                    if (SetPartyConfig == null) break;
+                    ClientMessageParsers.SET_PARTY_CONFIG.Build(buffer, index, length).Parse(out brand).Parse(out gameMode).CheckPadding();
+                    SetPartyConfig(brand, gameMode);
+                    break;
+                case ClientMessageType.NOTIFY_OF_BRAND_OWNERSHIP:
+                    if (NotifyOfBrandOwnership == null) break;
+                    ClientMessageParsers.NOTIFY_OF_BRAND_OWNERSHIP.Build(buffer, index, length).Parse(out brand).CheckPadding();
+                    NotifyOfBrandOwnership(brand);
+                    break;
+                case ClientMessageType.SET_HYPNOTIST_CHOICE:
+                    if (SetHypnotistChoice == null) break;
+                    ClientMessageParsers.SET_HYPNOTIST_CHOICE.Build(buffer, index, length).Parse(out LocalizationTable localizationTable).CheckPadding();
+                    SetHypnotistChoice(localizationTable);
+                    break;
+                case ClientMessageType.SET_JAILOR_DEATH_NOTE:
+                    if (SetJailorDeathNote == null) break;
+                    ClientMessageParsers.SET_JAILOR_DEATH_NOTE.Build(buffer, index, length).Parse(out ExecuteReason executeReason).CheckPadding();
+                    SetJailorDeathNote(executeReason);
+                    break;
+            }
+        }
     }
 }
