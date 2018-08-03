@@ -14,13 +14,13 @@ All you need to do is forward received data to the parser using the `Parse(byte[
 Every time the parser catches a message, it will trigger the read event.
 In the read callback, you are free to parse the message however you want, but there are some objects designed for ease of use.
 
-#### New Method
+#### New Parsing Method
 The `ClientMesssageParser` and `ServerMessageParser` are designed to parse messages and then forward the messages' contents to the appropriate event.
 `ClientMessageParser` is for parsing messages sent by the client, and `ServerMessageParser` is for parsing messages sent by the server.
 Both types' constructors accept a `MessageParser` and register the object's read listener.
 Once created, you can add a listener to any message type.
 
-#### Old Method
+#### Old Parsing Method
 Use the `ClientMessageType` and `ServerMessageType` enums to determine what type of message you've received.
 `ClientMessageType` is for messages sent by the client, and `ServerMessageType` is for messages sent by the server.
 After identifying the message type, you may use the parsers in `ClientMessageParsers` and `ServerMessageParsers` to easily extract additional data.
@@ -38,7 +38,7 @@ using ToSParser;
 
 class ParseDemo
 {
-    private const uint BUILD_NUMBER = 9706u;	// Likely outdated, replace with the fourth component of the official client version number
+    private const uint BUILD_NUMBER = 9706u;    // Likely outdated, replace with the fourth component of the official client version number
 
     private Socket socket;
     private MessageParser parser;
@@ -55,10 +55,10 @@ class ParseDemo
     {
         this.socket = socket;
         parser = new MessageParser();
-		ServerMessageParser messageParser = new ServerMessageParser(parser);
-		parser.MessageWrite += (buffer, index, length) => socket.Send(buffer, index, length, SocketFlags.None);
-		messageParser.PartyInviteNotification += OnPartyInviteNotification;
-		messageParser.FriendRequestNotifications += OnFriendRequestNotifications;
+        ServerMessageParser messageParser = new ServerMessageParser(parser);
+        parser.MessageWrite += (buffer, index, length) => socket.Send(buffer, index, length, SocketFlags.None);
+        messageParser.PartyInviteNotification += OnPartyInviteNotification;
+        messageParser.FriendRequestNotifications += OnFriendRequestNotifications;
         readBuffer = new byte[4096];
         QueueReceive();
         // Send the authentication message here.
@@ -66,20 +66,19 @@ class ParseDemo
         // parser.Authenticate(AuthenticationModeID.BMG_FORUMS, false, BUILD_NUMBER, "ExampleAccount", "examplepassword");
     }
 
-	private void OnPartyInviteNotification(uint userID, string username)
-	{
-		parser.RespondPartyInvite(PartyInviteResponse.ACCEPTING, userID);
-		parser.RespondPartyInvite(PartyInviteResponse.ACCEPTED, userID);
+    private void OnPartyInviteNotification(uint userID, string username)
+    {
+        parser.RespondPartyInvite(PartyInviteResponse.ACCEPTING, userID);
+        parser.RespondPartyInvite(PartyInviteResponse.ACCEPTED, userID);
+    }
 
-	}
-
-	private void OnFriendRequestNotifications(IEnumerable<(string username, uint userID)> notifications)
-	{
-		foreach ((string username, uint userID) in notifications)
-		{
-			parser.AcceptFriend(username, userID);
-		}
-	}
+    private void OnFriendRequestNotifications(IEnumerable<(string username, uint userID)> notifications)
+    {
+        foreach ((string username, uint userID) in notifications)
+        {
+            parser.AcceptFriend(username, userID);
+        }
+    }
 
     private void ParseMessage(byte[] buffer, int index, int length)
     {
