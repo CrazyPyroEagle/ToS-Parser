@@ -29,6 +29,8 @@ After identifying the message type, you may use the parsers in `ClientMessagePar
 `MessageParser` has a large number of extension methods to make sending messages vastly simpler and less error-prone.
 These extension methods are defined in the `ClientMessageParsers` and `ServerMessageParsers` classes.
 
+#### Example
+
 Here's an example of a program that automatically accepts any party invitation or friend request it receives.
 
 ```C#
@@ -38,7 +40,8 @@ using ToSParser;
 
 class ParseDemo
 {
-    private const uint BUILD_NUMBER = 9706u;    // Likely outdated, replace with the fourth component of the official client version number
+    // Likely outdated, replace with the fourth component of the official client version number
+    private const uint BUILD_NUMBER = 9706u;
 
     private Socket socket;
     private MessageParser parser;
@@ -62,8 +65,10 @@ class ParseDemo
         readBuffer = new byte[4096];
         QueueReceive();
         // Send the authentication message here.
-        // e.g. (Note: I do not recommend the use of legacy authentication due to its use of plaintext password transmission.)
-        // parser.Authenticate(AuthenticationModeID.BMG_FORUMS, false, BUILD_NUMBER, "ExampleAccount", "examplepassword");
+        // e.g. (Note: I do not recommend the use of legacy authentication
+        //        due to its use of plaintext password transmission.)
+        // parser.Authenticate(AuthenticationModeID.BMG_FORUMS, false,
+        //        BUILD_NUMBER, "ExampleAccount", "examplepassword");
     }
 
     private void OnPartyInviteNotification(uint userID, string username)
@@ -77,21 +82,6 @@ class ParseDemo
         foreach ((string username, uint userID) in notifications)
         {
             parser.AcceptFriend(username, userID);
-        }
-    }
-
-    private void ParseMessage(byte[] buffer, int index, int length)
-    {
-        switch ((ServerMessageType)buffer[index++])
-        {
-            case ServerMessageType.FRIEND_REQUEST_NOTIFICATIONS:
-                ServerMessageParsers.FRIEND_REQUEST_NOTIFICATIONS.Build(buffer, index, length).Parse(p =>
-                {
-                    RootParser root = p.Parse(out string username).Parse(out uint userID);
-                    parser.AcceptFriend(username, userID);
-                    return root;
-                }, out _);
-                break;
         }
     }
 
