@@ -583,7 +583,7 @@ namespace ToSParser
             public void ToBytes(byte[] buffer, ref int index, T value) => to(buffer, ref index, value);
         }
 
-        private static T ToDefault<T>(byte[] buffer, ref int index, int count) => default(T);
+        private static T ToDefault<T>(byte[] buffer, ref int index, int count) => default;
         private static void FromDefault<T>(byte[] buffer, ref int index, T value) { }
 
         private static string ToString(byte[] buffer, ref int index, int count)
